@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<Content Include="appsettings.json">
+			<CopyToOutputDirectory Condition="'$(Configuration)'=='Debug'">PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Autofac" Version="8.0.0" />
+	  <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
+	  <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\TaskManagement.Contracts.DataLayer\TaskManagement.Contracts.DataLayer.csproj" />
+	  <ProjectReference Include="..\TaskManagement.Contracts.Domain\TaskManagement.Contracts.Domain.csproj" />
+	  <ProjectReference Include="..\TaskManagement.DataLayer\TaskManagement.DataLayer.csproj" />
+	  <ProjectReference Include="..\TaskManagement.Domain\TaskManagement.Domain.csproj" />
+	  <ProjectReference Include="..\TaskManagement.Models\TaskManagement.Models.csproj" />
+	  <ProjectReference Include="..\TaskManagement.WebApi\TaskManagement.WebApi.csproj" />
+	</ItemGroup>
+
+</Project>
