@@ -29,6 +29,17 @@ namespace Domain.Services
         throw new InvalidDataException("Nie podano żadnych danych !");
       }
 
+      var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
+      var allTeams = await repository.GetAllAsync(input);
+
+      if (allTeams != null)
+      {
+        if (allTeams.Items.Any(s => s.Name == team.Name))
+        {
+          throw new InvalidDataException($"Istnieje już zespół o nazwie {team.Name}!");
+        }
+      }
+
       team.Id = GuidProvider.GenetareGuid();
 
       return await repository.StoreAsync(team);
