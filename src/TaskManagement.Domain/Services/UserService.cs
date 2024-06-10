@@ -46,7 +46,7 @@ namespace Domain.Services
 
     public async Task<User> Patch(Guid id, Change<User> user)
     {
-      ValidatePatchUser(user.Data);
+      ValidatePatchUser(user);
 
       return await repository.ChangeOneAsync(id, user);
     }
@@ -89,19 +89,19 @@ namespace Domain.Services
       }
     }
 
-    private void ValidatePatchUser(User user)
+    private void ValidatePatchUser(Change<User> user)
     {
-      if (user.Email != null)
+      if (user.Updates.Contains(nameof(User.Email)))
       {
-        if (!user.Email.Contains("@") && (!user.Email.Contains(".pl") || !user.Email.Contains(".com")))
+        if (!user.Data.Email.Contains("@") && (!user.Data.Email.Contains(".pl") || !user.Data.Email.Contains(".com")))
         {
           throw new InvalidDataException("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową!");
         }
       }
 
-      if (user.PhoneNumber != null)
+      if (user.Updates.Contains(nameof(User.PhoneNumber)))
       {
-        if (user.PhoneNumber.Length != 9 || !user.PhoneNumber.All(char.IsDigit))
+        if (user.Data.PhoneNumber.Length != 9 || !user.Data.PhoneNumber.All(char.IsDigit))
         {
           throw new InvalidDataException("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry!");
         }

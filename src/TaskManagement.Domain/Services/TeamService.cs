@@ -24,7 +24,7 @@ namespace Domain.Services
 
     public async Task<Team> AddAsync(Team team)
     {
-      if (team == null)
+      if (string.IsNullOrWhiteSpace(team.Name))
       {
         throw new InvalidDataException("Nie podano żadnych danych !");
       }
@@ -45,11 +45,7 @@ namespace Domain.Services
         return null;
       }
 
-      var exisitng = await userService.GetByIdAsync(userId);
-      if (exisitng == null)
-      {
-        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}");
-      }
+      await ValidateUserInTeam(userId);
 
       team.TeamLeaderId = userId;
 
@@ -71,25 +67,7 @@ namespace Domain.Services
         return null;
       }
 
-      var exisitng = await userService.GetByIdAsync(userId);
-
-      if (exisitng == null)
-      {
-        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}");
-      }
-
-      var input = new PageableInput { PageNumber = 0, PageSize = int.MaxValue };
-      var allTeams = await repository.GetAllAsync(input);
-
-      if (allTeams.Items.Any(s => s.UserIds.Contains(userId)))
-      {
-        throw new InvalidDataException("Użytkownik jest już przypisany do innego zespołu");
-      }
-
-      if (allTeams.Items.Any(s => s.TeamLeaderId == userId))
-      {
-        throw new InvalidDataException("Nie można dodać lidera zespołu jako członka zespołu");
-      }
+      await ValidateUserInTeam(userId);
 
       team.UserIds = (team.UserIds ?? new List<Guid>())
           .Append(userId)
@@ -130,6 +108,36 @@ namespace Domain.Services
     }
 
     public async Task<Team> Patch(Guid id, Change<Team> team)
-      => await repository.ChangeOneAsync(id, team);
+    {
+      if (team.Updates.Contains(nameof(Team.Name)))
+      {
+        var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
+        var allTeams = await repository.GetAllAsync(input);
+
+        if (allTeams.Items.Any(s => s.Name == team.Data.Name))
+        {
+          throw new InvalidDataException($"Istnieje już zespół o nazwie {team.Data.Name}!");
+        }
+      }
+      return await repository.ChangeOneAsync(id, team);
+    }
+
+    private async Task ValidateUserInTeam(Guid userId)
+    {
+      var exisitng = await userService.GetByIdAsync(userId);
+
+      if (exisitng == null)
+      {
+        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}");
+      }
+
+      var input = new PageableInput { PageNumber = 0, PageSize = int.MaxValue };
+      var allTeams = await repository.GetAllAsync(input);
+
+      if (allTeams.Items.Any(s => s.UserIds.Contains(userId)) || allTeams.Items.Any(s => s.TeamLeaderId == userId))
+      {
+        throw new InvalidDataException("Użytkownik jest już przypisany do innego zespołu");
+      }
+    }
   }
 }

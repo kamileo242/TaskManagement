@@ -1,4 +1,5 @@
 ﻿using Models;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Reflection;
 using Task = System.Threading.Tasks.Task;
@@ -24,6 +25,7 @@ namespace DataLayer.Repositories
       var client = new MongoClient(setup.ConnectionString);
       var database = client.GetDatabase(setup.DatabaseName);
       collection = database.GetCollection<TDbo>(collectionName);
+      BsonDefaults.GuidRepresentation = GuidRepresentation.Standard;
     }
 
     public async Task<TEntity> GetByIdAsync(TId id)
