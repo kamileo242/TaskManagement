@@ -150,7 +150,6 @@ namespace ServiceTests
       exception.WithMessage("Pozycja 'Nazwisko' jest wymagana !");
     }
 
-
     [Test]
     public async Task AddAsync_Should_Throw_exception_when_user_data_has_not_position()
     {

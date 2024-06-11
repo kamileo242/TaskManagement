@@ -24,21 +24,7 @@ namespace Domain.Services
 
     public async Task<Team> AddAsync(Team team)
     {
-      if (string.IsNullOrWhiteSpace(team.Name))
-      {
-        throw new InvalidDataException("Nie podano żadnych danych !");
-      }
-
-      var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
-      var allTeams = await repository.GetAllAsync(input);
-
-      if (allTeams != null)
-      {
-        if (allTeams.Items.Any(s => s.Name == team.Name))
-        {
-          throw new InvalidDataException($"Istnieje już zespół o nazwie {team.Name}!");
-        }
-      }
+      await ValidateTeamName(team.Name);
 
       team.Id = GuidProvider.GenetareGuid();
 
@@ -56,7 +42,7 @@ namespace Domain.Services
         return null;
       }
 
-      await ValidateUserInTeam(userId);
+      await ValidateUserInTeam(teamId, userId);
 
       team.TeamLeaderId = userId;
 
@@ -78,7 +64,7 @@ namespace Domain.Services
         return null;
       }
 
-      await ValidateUserInTeam(userId);
+      await ValidateUserInTeam(teamId, userId);
 
       team.UserIds = (team.UserIds ?? new List<Guid>())
           .Append(userId)
@@ -122,18 +108,12 @@ namespace Domain.Services
     {
       if (team.Updates.Contains(nameof(Team.Name)))
       {
-        var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
-        var allTeams = await repository.GetAllAsync(input);
-
-        if (allTeams.Items.Any(s => s.Name == team.Data.Name))
-        {
-          throw new InvalidDataException($"Istnieje już zespół o nazwie {team.Data.Name}!");
-        }
+        await ValidateTeamName(team.Data.Name);
       }
       return await repository.ChangeOneAsync(id, team);
     }
 
-    private async Task ValidateUserInTeam(Guid userId)
+    private async Task ValidateUserInTeam(Guid teamId, Guid userId)
     {
       var exisitng = await userService.GetByIdAsync(userId);
 
@@ -144,10 +124,27 @@ namespace Domain.Services
 
       var input = new PageableInput { PageNumber = 0, PageSize = int.MaxValue };
       var allTeams = await repository.GetAllAsync(input);
+      var filteredTeams = allTeams.Items.Where(s => s.Id != teamId);
 
-      if (allTeams.Items.Any(s => s.UserIds.Contains(userId)) || allTeams.Items.Any(s => s.TeamLeaderId == userId))
+      if (filteredTeams.Any(s => s.UserIds?.Contains(userId) == true) || filteredTeams.Any(s => s.TeamLeaderId == userId))
       {
-        throw new InvalidDataException("Użytkownik jest już przypisany do innego zespołu");
+        throw new InvalidDataException("Użytkownik jest już przypisany do innego zespołu !");
+      }
+    }
+
+    private async Task ValidateTeamName(string name)
+    {
+      if (string.IsNullOrWhiteSpace(name))
+      {
+        throw new InvalidDataException("Nie podano nazwy zespołu !");
+      }
+
+      var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
+      var allTeams = await repository.GetAllAsync(input);
+
+      if (allTeams.Items.Any(s => s.Name == name))
+      {
+        throw new InvalidDataException($"Istnieje już zespół o nazwie {name} !");
       }
     }
   }

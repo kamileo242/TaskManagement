@@ -164,7 +164,7 @@ namespace Domain.Services
 
       if (allProjects.Items.Any(s => s.Title == project.Title))
       {
-        throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Title}!");
+        throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Title} !");
       }
     }
 
@@ -177,7 +177,7 @@ namespace Domain.Services
 
         if (allProjects.Items.Any(s => s.Title == project.Data.Title))
         {
-          throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Data.Title}!");
+          throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Data.Title} !");
         }
       }
 
