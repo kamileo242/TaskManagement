@@ -25,7 +25,7 @@ namespace ServiceTests
     [Test]
     public async Task GetByIdAsync_Should_return_project_when_valid_id()
     {
-      var expectedProject = new Project
+      var expected = new Project
       {
         Id = Guid.Parse("00000000000000000000000000000001"),
         Title = "Projekt testowy",
@@ -34,34 +34,34 @@ namespace ServiceTests
         Deadline = DateTime.Parse("2024-05-05"),
         Status = ProjectStatus.NotStarted
       };
-      mockRepository.Setup(s => s.GetByIdAsync(expectedProject.Id)).ReturnsAsync(expectedProject);
+      mockRepository.Setup(s => s.GetByIdAsync(expected.Id)).ReturnsAsync(expected);
 
-      var result = await projectService.GetByIdAsync(expectedProject.Id);
+      var result = await projectService.GetByIdAsync(expected.Id);
 
       result.Should().NotBeNull();
-      result.Should().BeEquivalentTo(expectedProject);
+      result.Should().BeEquivalentTo(expected);
     }
 
     [Test]
     public async Task GetByIdAsync_Should_return_null_when_project_not_found()
     {
-      var nonExistentProjectId = Guid.Parse("00000000000000000000000000000001");
-      mockRepository.Setup(s => s.GetByIdAsync(nonExistentProjectId)).ReturnsAsync((Project) null);
+      var projectId = Guid.Parse("00000000000000000000000000000001");
+      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync((Project) null);
 
-      var result = await projectService.GetByIdAsync(nonExistentProjectId);
+      var result = await projectService.GetByIdAsync(projectId);
 
       result.Should().BeNull();
     }
 
     [Test]
-    public async Task GetByIdAsync_Should_return_projects_with_pagination()
+    public async Task GetAllAsync_Should_return_projects_with_pagination()
     {
       var input = new PageableInput
       {
         PageNumber = 0,
         PageSize = 50,
       };
-      var expectedProjects = new PageableResult<Project>
+      var expected = new PageableResult<Project>
       {
         Items = new Project[]
         {
@@ -82,12 +82,12 @@ namespace ServiceTests
           TotalElements = 1
         }
       };
-      mockRepository.Setup(s => s.GetAllAsync(input)).ReturnsAsync(expectedProjects);
+      mockRepository.Setup(s => s.GetAllAsync(input)).ReturnsAsync(expected);
 
       var result = await projectService.GetAllAsync(input);
 
       result.Should().NotBeNull();
-      result.Should().BeEquivalentTo(expectedProjects);
+      result.Should().BeEquivalentTo(expected);
     }
 
     [Test]
@@ -95,7 +95,7 @@ namespace ServiceTests
     {
       var createdAt = DateTime.Parse("2024-05-05");
       var projectId = Guid.Parse("00000000000000000000000000000001");
-      var expectedProjects = new PageableResult<Project>
+      var projects = new PageableResult<Project>
       {
         Items = Array.Empty<Project>(),
         Pagination = new Pagination
@@ -112,7 +112,7 @@ namespace ServiceTests
         Deadline = DateTime.Now.AddDays(3),
         Priority = 1,
       };
-      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(expectedProjects);
+      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(projects);
       mockRepository.Setup(s => s.StoreAsync(It.IsAny<Project>()))
               .ReturnsAsync((Project project) =>
               {
@@ -147,7 +147,7 @@ namespace ServiceTests
       var action = async () => await projectService.AddAsync(projectToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Pozycja 'Tytuł' jest wymagana !");
+      exception.WithMessage("Pozycja 'Tytuł' jest wymagana.");
     }
 
     [Test]
@@ -163,7 +163,7 @@ namespace ServiceTests
       var action = async () => await projectService.AddAsync(projectToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Pozycja 'Opis' jest wymagana !");
+      exception.WithMessage("Pozycja 'Opis' jest wymagana.");
     }
 
     [Test]
@@ -180,7 +180,7 @@ namespace ServiceTests
       var action = async () => await projectService.AddAsync(projectToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Priorytet musi mieścić się w zakresie od 0 do 5 !");
+      exception.WithMessage("Priorytet musi mieścić się w zakresie od 0 do 5.");
     }
 
     [Test]
@@ -197,7 +197,7 @@ namespace ServiceTests
       var action = async () => await projectService.AddAsync(projectToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Termin wykonania projektu już minął !");
+      exception.WithMessage("Termin wykonania projektu już minął.");
     }
 
     [Test]
@@ -212,7 +212,7 @@ namespace ServiceTests
         Deadline = DateTime.Now.AddDays(3),
         Priority = 1,
       };
-      var existingProjects = new PageableResult<Project>
+      var projects = new PageableResult<Project>
       {
         Items = new Project[]
         {
@@ -234,29 +234,29 @@ namespace ServiceTests
           TotalElements = 1
         }
       };
-      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(existingProjects);
+      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(projects);
 
       var action = async () => await projectService.AddAsync(projectToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage($"Istnieje już projekt o nazwie {projectToAdd.Title} !");
+      exception.WithMessage($"Istnieje już projekt o nazwie {projectToAdd.Title}.");
     }
 
     [Test]
     public async Task DeleteAsync_Should_remove_project()
     {
-      var projectIdToDelete = Guid.Parse("00000000000000000000000000000001");
+      var projectId = Guid.Parse("00000000000000000000000000000001");
 
-      await projectService.DeleteAsync(projectIdToDelete);
+      await projectService.DeleteAsync(projectId);
 
-      mockRepository.Verify(s => s.RemoveAsync(projectIdToDelete), Times.Once);
+      mockRepository.Verify(s => s.RemoveAsync(projectId), Times.Once);
     }
 
     [Test]
     public async Task EndProjectAsync_Should_return_project_with_status_ended()
     {
       var projectId = Guid.Parse("00000000000000000000000000000001");
-      var expectedProject = new Project
+      var expected = new Project
       {
         Id = projectId,
         Title = "Projekt testowy",
@@ -266,13 +266,13 @@ namespace ServiceTests
         CreatedAt = DateTime.Now,
         Status = ProjectStatus.NotStarted,
       };
-      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expectedProject);
-      mockRepository.Setup(s => s.ChangeOneAsync(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(expectedProject);
+      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expected);
+      mockRepository.Setup(s => s.ChangeOneAsync(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(expected);
 
       var result = await projectService.EndProjectAsync(projectId);
 
       result.Should().NotBeNull();
-      result.Should().BeEquivalentTo(expectedProject, o => o.Excluding(s => s.Status));
+      result.Should().BeEquivalentTo(expected, o => o.Excluding(s => s.Status));
       result.Status.Should().Be(ProjectStatus.Ended);
     }
 
@@ -309,7 +309,7 @@ namespace ServiceTests
     {
       var startTestTime = DateTime.Now;
       var projectId = Guid.Parse("00000000000000000000000000000001");
-      var expectedProject = new Project
+      var expected = new Project
       {
         Id = projectId,
         Title = "Projekt testowy",
@@ -324,14 +324,14 @@ namespace ServiceTests
         Author = "Kamil",
         Content = "Treść"
       };
-      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expectedProject);
-      mockRepository.Setup(s => s.ChangeOneAsync(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(expectedProject);
+      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expected);
+      mockRepository.Setup(s => s.ChangeOneAsync(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(expected);
 
       var result = await projectService.AddCommentAsync(projectId, newComment);
 
       var endTestTime = DateTime.Now;
       result.Should().NotBeNull();
-      result.Should().BeEquivalentTo(expectedProject, o => o.
+      result.Should().BeEquivalentTo(expected, o => o.
       Excluding(s => s.Comments));
       result.Comments.Should().HaveCount(1);
       result.Comments[0].Author.Should().Be(newComment.Author);
@@ -357,7 +357,7 @@ namespace ServiceTests
     {
       var projectId = Guid.Parse("00000000000000000000000000000001");
       var commentId = Guid.Parse("00000000000000000000000000000002");
-      var expectedProject = new Project
+      var expected = new Project
       {
         Id = projectId,
         Title = "Projekt testowy",
@@ -367,13 +367,13 @@ namespace ServiceTests
         CreatedAt = DateTime.Now,
         Status = ProjectStatus.NotStarted,
       };
-      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expectedProject);
-      mockRepository.Setup(s => s.ChangeOneAsync(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(expectedProject);
+      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expected);
+      mockRepository.Setup(s => s.ChangeOneAsync(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(expected);
 
       var result = await projectService.DeleteCommentAsync(projectId, commentId);
 
       result.Should().NotBeNull();
-      result.Should().BeEquivalentTo(expectedProject);
+      result.Should().BeEquivalentTo(expected);
     }
 
     [Test]
@@ -381,7 +381,7 @@ namespace ServiceTests
     {
       var projectId = Guid.Parse("00000000000000000000000000000001");
       var commentId = Guid.Parse("00000000000000000000000000000002");
-      var expectedProject = new Project
+      var project = new Project
       {
         Id = projectId,
         Title = "Projekt testowy",
@@ -411,7 +411,7 @@ namespace ServiceTests
         CreatedAt = DateTime.Now,
         Status = ProjectStatus.NotStarted,
       };
-      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expectedProject);
+      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expected);
       mockRepository.Setup(s => s.ChangeOneAsync(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(expected);
 
       var result = await projectService.DeleteCommentAsync(projectId, commentId);
@@ -437,7 +437,7 @@ namespace ServiceTests
     {
       var projectId = Guid.Parse("00000000000000000000000000000001");
       var taskId = Guid.Parse("00000000000000000000000000000002");
-      var expectedProject = new Project
+      var expected = new Project
       {
         Id = projectId,
         Title = "Projekt testowy",
@@ -447,13 +447,13 @@ namespace ServiceTests
         CreatedAt = DateTime.Now,
         Status = ProjectStatus.NotStarted,
       };
-      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expectedProject);
-      mockRepository.Setup(s => s.ChangeOneAsync(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(expectedProject);
+      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expected);
+      mockRepository.Setup(s => s.ChangeOneAsync(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(expected);
 
       var result = await projectService.DeleteTaskAsync(projectId, taskId);
 
       result.Should().NotBeNull();
-      result.Should().BeEquivalentTo(expectedProject);
+      result.Should().BeEquivalentTo(expected);
     }
 
     [Test]
@@ -461,7 +461,7 @@ namespace ServiceTests
     {
       var projectId = Guid.Parse("00000000000000000000000000000001");
       var taskId = Guid.Parse("00000000000000000000000000000002");
-      var expectedProject = new Project
+      var project = new Project
       {
         Id = projectId,
         Title = "Projekt testowy",
@@ -482,7 +482,7 @@ namespace ServiceTests
         CreatedAt = DateTime.Now,
         Status = ProjectStatus.NotStarted,
       };
-      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expectedProject);
+      mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(expected);
       mockRepository.Setup(s => s.ChangeOneAsync(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(expected);
 
       var result = await projectService.DeleteTaskAsync(projectId, taskId);
@@ -505,7 +505,7 @@ namespace ServiceTests
         CreatedAt = DateTime.Now,
         Status = ProjectStatus.NotStarted,
       };
-      var existingProjects = new PageableResult<Project>
+      var projects = new PageableResult<Project>
       {
         Items = new Project[] { project },
         Pagination = new Pagination
@@ -520,19 +520,19 @@ namespace ServiceTests
         Data = new Project { Title = "Projekt testowy", },
         Updates = new List<string> { nameof(Project.Title) }
       };
-      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(existingProjects);
+      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(projects);
 
       var action = async () => await projectService.Patch(projectId, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage($"Istnieje już projekt o nazwie {project.Title} !");
+      exception.WithMessage($"Istnieje już projekt o nazwie {project.Title}.");
     }
 
     [Test]
     public async Task Patch_Should_throw_exception_when_invalid_priority()
     {
       var projectId = Guid.Parse("00000000000000000000000000000001");
-      var existingProjects = new PageableResult<Project>
+      var projects = new PageableResult<Project>
       {
         Items = Array.Empty<Project>(),
         Pagination = new Pagination
@@ -547,19 +547,19 @@ namespace ServiceTests
         Data = new Project { Priority = 7, },
         Updates = new List<string> { nameof(Project.Priority) }
       };
-      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(existingProjects);
+      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(projects);
 
       var action = async () => await projectService.Patch(projectId, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Priorytet musi mieścić się w zakresie od 1 do 5 !");
+      exception.WithMessage("Priorytet musi mieścić się w zakresie od 1 do 5.");
     }
 
     [Test]
     public async Task Patch_Should_throw_exception_when_invalid_deadline()
     {
       var projectId = Guid.Parse("00000000000000000000000000000001");
-      var existingProjects = new PageableResult<Project>
+      var projects = new PageableResult<Project>
       {
         Items = Array.Empty<Project>(),
         Pagination = new Pagination
@@ -575,12 +575,12 @@ namespace ServiceTests
         Updates = new List<string> { nameof(Project.Deadline) }
       };
 
-      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(existingProjects);
+      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(projects);
 
       var action = async () => await projectService.Patch(projectId, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Termin wykonania projektu już minął !");
+      exception.WithMessage("Termin wykonania projektu już minął.");
     }
 
     [Test]
@@ -603,7 +603,7 @@ namespace ServiceTests
     public async Task Patch_Should_return_changed_project_when_valid_data()
     {
       var projectId = Guid.Parse("00000000000000000000000000000001");
-      var existingProjects = new PageableResult<Project>
+      var projects = new PageableResult<Project>
       {
         Items = Array.Empty<Project>(),
         Pagination = new Pagination
@@ -628,7 +628,7 @@ namespace ServiceTests
         CreatedAt = DateTime.Now,
         Status = ProjectStatus.NotStarted,
       };
-      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(existingProjects);
+      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(projects);
       mockRepository.Setup(s => s.ChangeOneAsync(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(expected);
 
       var result = await projectService.Patch(projectId, changes);

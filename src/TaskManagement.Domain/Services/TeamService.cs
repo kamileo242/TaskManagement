@@ -119,7 +119,7 @@ namespace Domain.Services
 
       if (exisitng == null)
       {
-        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}");
+        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}.");
       }
 
       var input = new PageableInput { PageNumber = 0, PageSize = int.MaxValue };
@@ -128,7 +128,7 @@ namespace Domain.Services
 
       if (filteredTeams.Any(s => s.UserIds?.Contains(userId) == true) || filteredTeams.Any(s => s.TeamLeaderId == userId))
       {
-        throw new InvalidDataException("Użytkownik jest już przypisany do innego zespołu !");
+        throw new InvalidDataException("Użytkownik jest już przypisany do innego zespołu.");
       }
     }
 
@@ -136,7 +136,7 @@ namespace Domain.Services
     {
       if (string.IsNullOrWhiteSpace(name))
       {
-        throw new InvalidDataException("Nie podano nazwy zespołu !");
+        throw new InvalidDataException("Nie podano nazwy zespołu.");
       }
 
       var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
@@ -144,7 +144,7 @@ namespace Domain.Services
 
       if (allTeams.Items.Any(s => s.Name == name))
       {
-        throw new InvalidDataException($"Istnieje już zespół o nazwie {name} !");
+        throw new InvalidDataException($"Istnieje już zespół o nazwie {name}.");
       }
     }
   }

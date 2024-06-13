@@ -137,26 +137,26 @@ namespace Domain.Services
     {
       if (project == null)
       {
-        throw new InvalidDataException("Nie podano żadnych danych !");
+        throw new InvalidDataException("Nie podano żadnych danych.");
       }
       if (string.IsNullOrWhiteSpace(project.Title))
       {
-        throw new InvalidDataException("Pozycja 'Tytuł' jest wymagana !");
+        throw new InvalidDataException("Pozycja 'Tytuł' jest wymagana.");
       }
 
       if (string.IsNullOrWhiteSpace(project?.Description))
       {
-        throw new InvalidDataException("Pozycja 'Opis' jest wymagana !");
+        throw new InvalidDataException("Pozycja 'Opis' jest wymagana.");
       }
 
       if (project.Priority > 5 || project.Priority < 0)
       {
-        throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 0 do 5 !");
+        throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 0 do 5.");
       }
 
       if (project.Deadline < DateTime.Now)
       {
-        throw new InvalidDataException("Termin wykonania projektu już minął !");
+        throw new InvalidDataException("Termin wykonania projektu już minął.");
       }
 
       var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
@@ -164,7 +164,7 @@ namespace Domain.Services
 
       if (allProjects.Items.Any(s => s.Title == project.Title))
       {
-        throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Title} !");
+        throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Title}.");
       }
     }
 
@@ -177,7 +177,7 @@ namespace Domain.Services
 
         if (allProjects.Items.Any(s => s.Title == project.Data.Title))
         {
-          throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Data.Title} !");
+          throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Data.Title}.");
         }
       }
 
@@ -185,7 +185,7 @@ namespace Domain.Services
       {
         if (project.Data.Priority > 5 || project.Data.Priority < 1)
         {
-          throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5 !");
+          throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5.");
         }
       }
 
@@ -193,7 +193,7 @@ namespace Domain.Services
       {
         if (project.Data.Deadline < DateTime.Now)
         {
-          throw new InvalidDataException("Termin wykonania projektu już minął !");
+          throw new InvalidDataException("Termin wykonania projektu już minął.");
         }
       }
     }

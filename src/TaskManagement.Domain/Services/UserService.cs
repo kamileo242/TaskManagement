@@ -55,27 +55,27 @@ namespace Domain.Services
     {
       if (string.IsNullOrWhiteSpace(user?.Name))
       {
-        throw new InvalidDataException("Pozycja 'Imię' jest wymagana !");
+        throw new InvalidDataException("Pozycja 'Imię' jest wymagana.");
       }
 
       if (string.IsNullOrWhiteSpace(user?.Surname))
       {
-        throw new InvalidDataException("Pozycja 'Nazwisko' jest wymagana !");
+        throw new InvalidDataException("Pozycja 'Nazwisko' jest wymagana.");
       }
 
       if (string.IsNullOrWhiteSpace(user?.Position))
       {
-        throw new InvalidDataException("Pozycja 'Stanowisko' jest wymagana !");
+        throw new InvalidDataException("Pozycja 'Stanowisko' jest wymagana.");
       }
 
       if (!user.Email.Contains("@") && (!user.Email.Contains(".pl") || !user.Email.Contains(".com")))
       {
-        throw new InvalidDataException("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową !");
+        throw new InvalidDataException("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową.");
       }
 
       if (user.PhoneNumber.Length != 9 || !user.PhoneNumber.All(char.IsDigit))
       {
-        throw new InvalidDataException("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry !");
+        throw new InvalidDataException("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry.");
       }
     }
 
@@ -85,7 +85,7 @@ namespace Domain.Services
       {
         if (!user.Data.Email.Contains("@") && (!user.Data.Email.Contains(".pl") || !user.Data.Email.Contains(".com")))
         {
-          throw new InvalidDataException("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową !");
+          throw new InvalidDataException("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową.");
         }
       }
 
@@ -93,7 +93,7 @@ namespace Domain.Services
       {
         if (user.Data.PhoneNumber.Length != 9 || !user.Data.PhoneNumber.All(char.IsDigit))
         {
-          throw new InvalidDataException("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry !");
+          throw new InvalidDataException("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry.");
         }
       }
     }

@@ -34,7 +34,7 @@ namespace Domain.Services
       await ValidateStoreTask(projectId, task);
 
       task.Id = GuidProvider.GenetareGuid();
-      task.Status = Models.Statueses.TaskStatus.NotStarted;
+      task.Status = TaskStatus.NotStarted;
       task.CreatedAt = TimeProvider.GetTime();
 
       ChangeProjectStatusAndAddTaskId(projectId, task.Id);
@@ -79,7 +79,7 @@ namespace Domain.Services
 
       if (exisitng == null)
       {
-        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}");
+        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}.");
       }
 
       task.AssignedPersonId = userId;
@@ -171,12 +171,12 @@ namespace Domain.Services
     {
       if (task == null)
       {
-        throw new InvalidDataException("Nie podano żadnych danych!");
+        throw new InvalidDataException("Nie podano żadnych danych.");
       }
 
       if (string.IsNullOrWhiteSpace(task.Title))
       {
-        throw new InvalidDataException("Pozycja 'Tytuł' jest wymagana!");
+        throw new InvalidDataException("Pozycja 'Tytuł' jest wymagana.");
       }
 
       var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
@@ -184,29 +184,29 @@ namespace Domain.Services
 
       if (allTasks.Items.Any(s => s.Title == task.Title))
       {
-        throw new InvalidDataException($"Istnieje już zadanie o nazwie {task.Title} !");
+        throw new InvalidDataException($"Istnieje już zadanie o nazwie {task.Title}.");
       }
 
       if (task.Priority > 5 || task.Priority < 1)
       {
-        throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5 !");
+        throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5.");
       }
 
       if (task.Deadline < DateTime.Now)
       {
-        throw new InvalidDataException("Termin wykonania projektu już minął !");
+        throw new InvalidDataException("Termin wykonania zadania już minął.");
       }
 
       var project = await projectService.GetByIdAsync(projectId);
 
       if (project == null)
       {
-        throw new InvalidDataException($"Nie znlaziono projektu o identyfikatorze {projectId}");
+        throw new InvalidDataException($"Nie znlaziono projektu o identyfikatorze {projectId}.");
       }
 
       if (project.Status == ProjectStatus.Ended)
       {
-        throw new InvalidDataException($"Nie można dodać zadania do zakończonego projektu");
+        throw new InvalidDataException("Nie można dodać zadania do zakończonego projektu.");
       }
     }
 
@@ -216,7 +216,7 @@ namespace Domain.Services
       {
         if (task.Data.Priority > 5 || task.Data.Priority < 1)
         {
-          throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5 !");
+          throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5.");
         }
       }
 
@@ -224,7 +224,7 @@ namespace Domain.Services
       {
         if (task.Data.Deadline < DateTime.Now)
         {
-          throw new InvalidDataException("Termin wykonania projektu już minął !");
+          throw new InvalidDataException("Termin wykonania projektu już minął.");
         }
       }
 
@@ -235,7 +235,7 @@ namespace Domain.Services
 
         if (allTasks.Items.Any(s => s.Title == task.Data.Title))
         {
-          throw new InvalidDataException($"Istnieje już zadanie o nazwie {task.Data.Title}!");
+          throw new InvalidDataException($"Istnieje już zadanie o nazwie {task.Data.Title}.");
         }
       }
     }

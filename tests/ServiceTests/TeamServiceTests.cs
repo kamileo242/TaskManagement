@@ -26,39 +26,39 @@ namespace ServiceTests
     [Test]
     public async Task GetByIdAsync_Should_return_team_when_valid_id()
     {
-      var expectedTeam = new Team
+      var expected = new Team
       {
         Id = Guid.Parse("00000000000000000000000000000001"),
         Name = "NET",
       };
-      mockRepository.Setup(s => s.GetByIdAsync(expectedTeam.Id)).ReturnsAsync(expectedTeam);
+      mockRepository.Setup(s => s.GetByIdAsync(expected.Id)).ReturnsAsync(expected);
 
-      var result = await teamService.GetByIdAsync(expectedTeam.Id);
+      var result = await teamService.GetByIdAsync(expected.Id);
 
       result.Should().NotBeNull();
-      result.Should().BeEquivalentTo(expectedTeam);
+      result.Should().BeEquivalentTo(expected);
     }
 
     [Test]
     public async Task GetByIdAsync_Should_return_null_when_team_not_found()
     {
-      var nonExistentteamId = Guid.Parse("00000000000000000000000000000001");
-      mockRepository.Setup(s => s.GetByIdAsync(nonExistentteamId)).ReturnsAsync((Team) null);
+      var teamId = Guid.Parse("00000000000000000000000000000001");
+      mockRepository.Setup(s => s.GetByIdAsync(teamId)).ReturnsAsync((Team) null);
 
-      var result = await teamService.GetByIdAsync(nonExistentteamId);
+      var result = await teamService.GetByIdAsync(teamId);
 
       result.Should().BeNull();
     }
 
     [Test]
-    public async Task GetByIdAsync_Should_return_teams_with_pagination()
+    public async Task GetAllAsync_Should_return_teams_with_pagination()
     {
       var input = new PageableInput
       {
         PageNumber = 0,
         PageSize = 50,
       };
-      var expectedTeams = new PageableResult<Team>
+      var expected = new PageableResult<Team>
       {
         Items = new Team[]
         {
@@ -75,12 +75,12 @@ namespace ServiceTests
           TotalElements = 1
         }
       };
-      mockRepository.Setup(s => s.GetAllAsync(input)).ReturnsAsync(expectedTeams);
+      mockRepository.Setup(s => s.GetAllAsync(input)).ReturnsAsync(expected);
 
       var result = await teamService.GetAllAsync(input);
 
       result.Should().NotBeNull();
-      result.Should().BeEquivalentTo(expectedTeams);
+      result.Should().BeEquivalentTo(expected);
     }
 
     [Test]
@@ -92,12 +92,12 @@ namespace ServiceTests
       {
         Name = "NET",
       };
-      var expectedAllTeams = new PageableResult<Team>
+      var allTeams = new PageableResult<Team>
       {
         Items = new Team[] { new Team { Id = Guid.Parse("00000000000000000000000000000002"), Name = "JAVA" } },
         Pagination = new Pagination { PageNumber = 0, PageSize = int.MaxValue, TotalElements = 1 }
       };
-      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(expectedAllTeams);
+      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(allTeams);
       mockRepository.Setup(s => s.StoreAsync(It.IsAny<Team>()))
                     .ReturnsAsync((Team team) =>
                     {
@@ -122,12 +122,12 @@ namespace ServiceTests
       {
         Name = "NET",
       };
-      var expectedAllTeams = new PageableResult<Team>
+      var allTeams = new PageableResult<Team>
       {
         Items = new Team[] { new Team { Id = Guid.Parse("00000000000000000000000000000002"), Name = "NET" } },
         Pagination = new Pagination { PageNumber = 0, PageSize = int.MaxValue, TotalElements = 1 }
       };
-      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(expectedAllTeams);
+      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(allTeams);
       mockRepository.Setup(s => s.StoreAsync(It.IsAny<Team>()))
                     .ReturnsAsync((Team team) =>
                     {
@@ -138,7 +138,7 @@ namespace ServiceTests
       var action = async () => await teamService.AddAsync(teamToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Istnieje już zespół o nazwie NET !");
+      exception.WithMessage($"Istnieje już zespół o nazwie {teamToAdd.Name}.");
     }
 
     [Test]
@@ -147,21 +147,21 @@ namespace ServiceTests
       var action = async () => await teamService.AddAsync(new Team());
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Nie podano nazwy zespołu !");
+      exception.WithMessage("Nie podano nazwy zespołu.");
     }
 
     [Test]
-    public async Task DeleteAsync_Should_remove_user()
+    public async Task DeleteAsync_Should_remove_team()
     {
-      var teamIdToDelete = Guid.Parse("00000000000000000000000000000001");
+      var teamId = Guid.Parse("00000000000000000000000000000001");
 
-      await teamService.DeleteAsync(teamIdToDelete);
+      await teamService.DeleteAsync(teamId);
 
-      mockRepository.Verify(s => s.RemoveAsync(teamIdToDelete), Times.Once);
+      mockRepository.Verify(s => s.RemoveAsync(teamId), Times.Once);
     }
 
     [Test]
-    public async Task AddTeamLeaderAsync_Should_return_team_with_teamLeader()
+    public async Task AddTeamLeaderAsync_Should_return_updated_team_when_valid_data()
     {
       var teamId = Guid.Parse("00000000000000000000000000000001");
       var userId = Guid.Parse("00000000000000000000000000000002");
@@ -229,7 +229,7 @@ namespace ServiceTests
       var action = async () => await teamService.AddTeamLeader(teamId, userId);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage($"Nie znaleziono użytkownika o Id: {userId}");
+      exception.WithMessage($"Nie znaleziono użytkownika o Id: {userId}.");
     }
 
     [Test]
@@ -270,11 +270,11 @@ namespace ServiceTests
       var action = async () => await teamService.AddTeamLeader(teamId1, userId);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Użytkownik jest już przypisany do innego zespołu !");
+      exception.WithMessage("Użytkownik jest już przypisany do innego zespołu.");
     }
 
     [Test]
-    public async Task AddUserToTeam_Should_return_team_with_new_user()
+    public async Task AddUserToTeam_Should_return_updated_team_when_valid_data()
     {
       var teamId = Guid.Parse("00000000000000000000000000000001");
       var userId = Guid.Parse("00000000000000000000000000000002");
@@ -384,7 +384,7 @@ namespace ServiceTests
       var action = async () => await teamService.AddUserToTeam(teamId, userId);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage($"Nie znaleziono użytkownika o Id: {userId}");
+      exception.WithMessage($"Nie znaleziono użytkownika o Id: {userId}.");
     }
 
     [Test]
@@ -425,11 +425,11 @@ namespace ServiceTests
       var action = async () => await teamService.AddUserToTeam(teamId1, userId);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Użytkownik jest już przypisany do innego zespołu !");
+      exception.WithMessage("Użytkownik jest już przypisany do innego zespołu.");
     }
 
     [Test]
-    public async Task DeleteUserFromTeam_Should_return_team_without_user_when_user_is_in_team()
+    public async Task DeleteUserFromTeam_Should_return_updated_team_valid_data()
     {
       var teamId = Guid.Parse("00000000000000000000000000000001");
       var userId = Guid.Parse("00000000000000000000000000000002");
@@ -560,11 +560,11 @@ namespace ServiceTests
       var action = async () => await teamService.Patch(teamId1, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage($"Istnieje już zespół o nazwie {team2.Name} !");
+      exception.WithMessage($"Istnieje już zespół o nazwie {team2.Name}.");
     }
 
     [Test]
-    public async Task Patch_Should_return_changed_team_when_valid_data()
+    public async Task Patch_Should_return_updated_team_when_valid_data()
     {
       var teamId = Guid.Parse("00000000000000000000000000000001");
       var team1 = new Team

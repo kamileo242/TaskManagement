@@ -24,7 +24,7 @@ namespace ServiceTests
     [Test]
     public async Task GetByIdAsync_Should_return_user_when_valid_id()
     {
-      var expectedUser = new User
+      var expected = new User
       {
         Id = Guid.Parse("00000000000000000000000000000001"),
         Name = "Johnny",
@@ -33,21 +33,21 @@ namespace ServiceTests
         Email = "johnny.deep@example.com",
         PhoneNumber = "123456789"
       };
-      mockRepository.Setup(s => s.GetByIdAsync(expectedUser.Id)).ReturnsAsync(expectedUser);
+      mockRepository.Setup(s => s.GetByIdAsync(expected.Id)).ReturnsAsync(expected);
 
-      var result = await userService.GetByIdAsync(expectedUser.Id);
+      var result = await userService.GetByIdAsync(expected.Id);
 
       result.Should().NotBeNull();
-      result.Should().BeEquivalentTo(expectedUser);
+      result.Should().BeEquivalentTo(expected);
     }
 
     [Test]
     public async Task GetByIdAsync_Should_return_null_when_user_not_found()
     {
-      var nonExistentUserId = Guid.Parse("00000000000000000000000000000001");
-      mockRepository.Setup(s => s.GetByIdAsync(nonExistentUserId)).ReturnsAsync((User) null);
+      var userId = Guid.Parse("00000000000000000000000000000001");
+      mockRepository.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync((User) null);
 
-      var result = await userService.GetByIdAsync(nonExistentUserId);
+      var result = await userService.GetByIdAsync(userId);
 
       result.Should().BeNull();
     }
@@ -60,7 +60,7 @@ namespace ServiceTests
         PageNumber = 0,
         PageSize = 50,
       };
-      var expectedUsers = new PageableResult<User>
+      var expected = new PageableResult<User>
       {
         Items = new User[]
         {
@@ -81,12 +81,12 @@ namespace ServiceTests
           TotalElements = 1
         }
       };
-      mockRepository.Setup(s => s.GetAllAsync(input)).ReturnsAsync(expectedUsers);
+      mockRepository.Setup(s => s.GetAllAsync(input)).ReturnsAsync(expected);
 
       var result = await userService.GetAllAsync(input);
 
       result.Should().NotBeNull();
-      result.Should().BeEquivalentTo(expectedUsers);
+      result.Should().BeEquivalentTo(expected);
     }
 
     [Test]
@@ -130,7 +130,7 @@ namespace ServiceTests
       var action = async () => await userService.AddAsync(invalidUser);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Pozycja 'Imię' jest wymagana !");
+      exception.WithMessage("Pozycja 'Imię' jest wymagana.");
     }
 
     [Test]
@@ -147,7 +147,7 @@ namespace ServiceTests
       var action = async () => await userService.AddAsync(invalidUser);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Pozycja 'Nazwisko' jest wymagana !");
+      exception.WithMessage("Pozycja 'Nazwisko' jest wymagana.");
     }
 
     [Test]
@@ -164,7 +164,7 @@ namespace ServiceTests
       var action = async () => await userService.AddAsync(invalidUser);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Pozycja 'Stanowisko' jest wymagana !");
+      exception.WithMessage("Pozycja 'Stanowisko' jest wymagana.");
     }
 
     [Test]
@@ -182,7 +182,7 @@ namespace ServiceTests
       var action = async () => await userService.AddAsync(invalidUser);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową !");
+      exception.WithMessage("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową.");
     }
 
     [Test]
@@ -200,7 +200,7 @@ namespace ServiceTests
       var action = async () => await userService.AddAsync(invalidUser);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry !");
+      exception.WithMessage("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry.");
     }
 
     [Test]
@@ -216,15 +216,14 @@ namespace ServiceTests
     [Test]
     public async Task Patch_Should_return_null_when_userId_not_found()
     {
-      var invalidUserId = Guid.Parse("00000000000000000000000000000001");
+      var userId = Guid.Parse("00000000000000000000000000000001");
       var changes = new Change<User>() { Data = new User { Name = "Jack" }, Updates = new List<string> { nameof(User.Name) } };
-      mockRepository.Setup(s => s.ChangeOneAsync(invalidUserId, changes)).ReturnsAsync((User) null);
+      mockRepository.Setup(s => s.ChangeOneAsync(userId, changes)).ReturnsAsync((User) null);
 
-      var result = await userService.Patch(invalidUserId, changes);
+      var result = await userService.Patch(userId, changes);
 
       result.Should().BeNull();
     }
-
 
     [Test]
     public async Task Patch_Should_throw_exception_when_email_is_invalid()
@@ -235,7 +234,7 @@ namespace ServiceTests
       var action = async () => await userService.Patch(userId, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową !");
+      exception.WithMessage("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową.");
     }
 
     [Test]
@@ -247,7 +246,7 @@ namespace ServiceTests
       var action = async () => await userService.Patch(userId, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry !");
+      exception.WithMessage("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry.");
     }
 
     [Test]
