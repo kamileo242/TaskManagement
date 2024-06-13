@@ -34,7 +34,7 @@ namespace Domain.Services
       await ValidateStoreTask(projectId, task);
 
       task.Id = GuidProvider.GenetareGuid();
-      task.Status = Models.Statueses.TaskStatus.NotStarted;
+      task.Status = TaskStatus.NotStarted;
       task.CreatedAt = TimeProvider.GetTime();
 
       ChangeProjectStatusAndAddTaskId(projectId, task.Id);
@@ -54,9 +54,12 @@ namespace Domain.Services
         return null;
       }
 
+      task.Status = TaskStatus.Started;
+      task.SpentTime = task.SpentTime + timeInMinutes;
+
       var changes = new Change<Models.Task>
       {
-        Data = new Models.Task { Id = taskId, Status = TaskStatus.Started, SpentTime = task.SpentTime + timeInMinutes },
+        Data = task,
         Updates = new List<string> { nameof(task.SpentTime), nameof(task.Status) }
       };
 
@@ -65,16 +68,25 @@ namespace Domain.Services
 
     public async Task<Models.Task> AssignPersonToTaskAsync(Guid taskId, Guid userId)
     {
+      var task = await GetByIdAsync(taskId);
+
+      if (task == null)
+      {
+        return null;
+      }
+
       var exisitng = await userService.GetByIdAsync(userId);
 
       if (exisitng == null)
       {
-        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}");
+        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}.");
       }
+
+      task.AssignedPersonId = userId;
 
       var changes = new Change<Models.Task>
       {
-        Data = new Models.Task { Id = taskId, AssignedPersonId = userId },
+        Data = task,
         Updates = new List<string> { nameof(Models.Task.AssignedPersonId) }
       };
 
@@ -83,9 +95,18 @@ namespace Domain.Services
 
     public async Task<Models.Task> EndTaskStatusAsync(Guid taskId)
     {
+      var task = await GetByIdAsync(taskId);
+
+      if (task == null)
+      {
+        return null;
+      }
+
+      task.Status = TaskStatus.Ended;
+
       var changes = new Change<Models.Task>
       {
-        Data = new Models.Task { Id = taskId, Status = TaskStatus.Ended },
+        Data = task,
         Updates = new List<string> { nameof(Models.Task.Status) }
       };
 
@@ -109,7 +130,7 @@ namespace Domain.Services
 
       var changes = new Change<Models.Task>
       {
-        Data = new Models.Task { Id = taskId, Comments = task.Comments },
+        Data = task,
         Updates = new List<string> { nameof(task.Comments) }
       };
 
@@ -132,7 +153,7 @@ namespace Domain.Services
 
       var changes = new Change<Models.Task>
       {
-        Data = new Models.Task { Id = taskId, Comments = task.Comments },
+        Data = task,
         Updates = new List<string> { nameof(task.Comments) }
       };
 
@@ -141,7 +162,7 @@ namespace Domain.Services
 
     public async Task<Models.Task> Patch(Guid id, Change<Models.Task> task)
     {
-      await ValidateChangeTask(task.Data);
+      await ValidateChangeTask(task);
 
       return await repository.ChangeOneAsync(id, task);
     }
@@ -150,12 +171,12 @@ namespace Domain.Services
     {
       if (task == null)
       {
-        throw new InvalidDataException("Nie podano żadnych danych!");
+        throw new InvalidDataException("Nie podano żadnych danych.");
       }
 
       if (string.IsNullOrWhiteSpace(task.Title))
       {
-        throw new InvalidDataException("Pozycja 'Tytuł' jest wymagana!");
+        throw new InvalidDataException("Pozycja 'Tytuł' jest wymagana.");
       }
 
       var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
@@ -163,58 +184,58 @@ namespace Domain.Services
 
       if (allTasks.Items.Any(s => s.Title == task.Title))
       {
-        throw new InvalidDataException($"Istnieje już zadanie o nazwie {task.Title} !");
+        throw new InvalidDataException($"Istnieje już zadanie o nazwie {task.Title}.");
       }
 
       if (task.Priority > 5 || task.Priority < 1)
       {
-        throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5 !");
+        throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5.");
       }
 
       if (task.Deadline < DateTime.Now)
       {
-        throw new InvalidDataException("Termin wykonania projektu już minął !");
+        throw new InvalidDataException("Termin wykonania zadania już minął.");
       }
 
       var project = await projectService.GetByIdAsync(projectId);
 
       if (project == null)
       {
-        throw new InvalidDataException($"Nie znlaziono projektu o identyfikatorze {projectId}");
+        throw new InvalidDataException($"Nie znlaziono projektu o identyfikatorze {projectId}.");
       }
 
       if (project.Status == ProjectStatus.Ended)
       {
-        throw new InvalidDataException($"Nie można dodać zadania do zakończonego projektu");
+        throw new InvalidDataException("Nie można dodać zadania do zakończonego projektu.");
       }
     }
 
-    private async System.Threading.Tasks.Task ValidateChangeTask(Models.Task task)
+    private async System.Threading.Tasks.Task ValidateChangeTask(Change<Models.Task> task)
     {
-      if (task.Priority != 0)
+      if (task.Updates.Contains(nameof(Models.Task.Priority)))
       {
-        if (task.Priority > 5 || task.Priority < 1)
+        if (task.Data.Priority > 5 || task.Data.Priority < 1)
         {
-          throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5 !");
+          throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5.");
         }
       }
 
-      if (task.Deadline.Date != DateTime.MinValue.Date)
+      if (task.Updates.Contains(nameof(Models.Task.Deadline)))
       {
-        if (task.Deadline < DateTime.Now)
+        if (task.Data.Deadline < DateTime.Now)
         {
-          throw new InvalidDataException("Termin wykonania projektu już minął !");
+          throw new InvalidDataException("Termin wykonania projektu już minął.");
         }
       }
 
-      if (!string.IsNullOrWhiteSpace(task.Title))
+      if (task.Updates.Contains(nameof(Models.Task.Title)))
       {
         var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
         var allTasks = await repository.GetAllAsync(input);
 
-        if (allTasks.Items.Any(s => s.Title == task.Title))
+        if (allTasks.Items.Any(s => s.Title == task.Data.Title))
         {
-          throw new InvalidDataException($"Istnieje już zadanie o nazwie {task.Title}!");
+          throw new InvalidDataException($"Istnieje już zadanie o nazwie {task.Data.Title}.");
         }
       }
     }
@@ -233,7 +254,7 @@ namespace Domain.Services
 
       var changes = new Change<Project>
       {
-        Data = new Project { Id = project.Id, TaskIds = project.TaskIds, Status = project.Status },
+        Data = project,
         Updates = new List<string> { nameof(project.TaskIds), nameof(project.Status) }
       };
 

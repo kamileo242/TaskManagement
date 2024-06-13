@@ -24,10 +24,7 @@ namespace Domain.Services
 
     public async Task<Team> AddAsync(Team team)
     {
-      if (team == null)
-      {
-        throw new InvalidDataException("Nie podano żadnych danych !");
-      }
+      await ValidateTeamName(team.Name);
 
       team.Id = GuidProvider.GenetareGuid();
 
@@ -45,11 +42,7 @@ namespace Domain.Services
         return null;
       }
 
-      var exisitng = await userService.GetByIdAsync(userId);
-      if (exisitng == null)
-      {
-        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}");
-      }
+      await ValidateUserInTeam(teamId, userId);
 
       team.TeamLeaderId = userId;
 
@@ -71,25 +64,7 @@ namespace Domain.Services
         return null;
       }
 
-      var exisitng = await userService.GetByIdAsync(userId);
-
-      if (exisitng == null)
-      {
-        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}");
-      }
-
-      var input = new PageableInput { PageNumber = 0, PageSize = int.MaxValue };
-      var allTeams = await repository.GetAllAsync(input);
-
-      if (allTeams.Items.Any(s => s.UserIds.Contains(userId)))
-      {
-        throw new InvalidDataException("Użytkownik jest już przypisany do innego zespołu");
-      }
-
-      if (allTeams.Items.Any(s => s.TeamLeaderId == userId))
-      {
-        throw new InvalidDataException("Nie można dodać lidera zespołu jako członka zespołu");
-      }
+      await ValidateUserInTeam(teamId, userId);
 
       team.UserIds = (team.UserIds ?? new List<Guid>())
           .Append(userId)
@@ -130,6 +105,47 @@ namespace Domain.Services
     }
 
     public async Task<Team> Patch(Guid id, Change<Team> team)
-      => await repository.ChangeOneAsync(id, team);
+    {
+      if (team.Updates.Contains(nameof(Team.Name)))
+      {
+        await ValidateTeamName(team.Data.Name);
+      }
+      return await repository.ChangeOneAsync(id, team);
+    }
+
+    private async Task ValidateUserInTeam(Guid teamId, Guid userId)
+    {
+      var exisitng = await userService.GetByIdAsync(userId);
+
+      if (exisitng == null)
+      {
+        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}.");
+      }
+
+      var input = new PageableInput { PageNumber = 0, PageSize = int.MaxValue };
+      var allTeams = await repository.GetAllAsync(input);
+      var filteredTeams = allTeams.Items.Where(s => s.Id != teamId);
+
+      if (filteredTeams.Any(s => s.UserIds?.Contains(userId) == true) || filteredTeams.Any(s => s.TeamLeaderId == userId))
+      {
+        throw new InvalidDataException("Użytkownik jest już przypisany do innego zespołu.");
+      }
+    }
+
+    private async Task ValidateTeamName(string name)
+    {
+      if (string.IsNullOrWhiteSpace(name))
+      {
+        throw new InvalidDataException("Nie podano nazwy zespołu.");
+      }
+
+      var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
+      var allTeams = await repository.GetAllAsync(input);
+
+      if (allTeams.Items.Any(s => s.Name == name))
+      {
+        throw new InvalidDataException($"Istnieje już zespół o nazwie {name}.");
+      }
+    }
   }
 }

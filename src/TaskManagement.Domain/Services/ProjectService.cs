@@ -48,7 +48,7 @@ namespace Domain.Services
 
       var changes = new Change<Project>
       {
-        Data = new Project { Id = project.Id, Status = project.Status },
+        Data = project,
         Updates = new List<string> { nameof(project.Status) }
       };
 
@@ -72,7 +72,7 @@ namespace Domain.Services
 
       var changes = new Change<Project>
       {
-        Data = new Project { Id = project.Id, Comments = project.Comments },
+        Data = project,
         Updates = new List<string> { nameof(project.Comments) }
       };
 
@@ -95,7 +95,7 @@ namespace Domain.Services
 
       var changes = new Change<Project>
       {
-        Data = new Project { Id = project.Id, Comments = project.Comments },
+        Data = project,
         Updates = new List<string> { nameof(project.Comments) }
       };
 
@@ -118,7 +118,7 @@ namespace Domain.Services
 
       var changes = new Change<Project>
       {
-        Data = new Project { Id = project.Id, TaskIds = project.TaskIds },
+        Data = project,
         Updates = new List<string> { nameof(project.TaskIds) }
       };
 
@@ -127,7 +127,7 @@ namespace Domain.Services
 
     public async Task<Project> Patch(Guid id, Change<Project> project)
     {
-      await ValidateChangeProject(project.Data);
+      await ValidateChangeProject(project);
 
       return await repository.ChangeOneAsync(id, project);
     }
@@ -137,26 +137,26 @@ namespace Domain.Services
     {
       if (project == null)
       {
-        throw new InvalidDataException("Nie podano żadnych danych !");
+        throw new InvalidDataException("Nie podano żadnych danych.");
       }
       if (string.IsNullOrWhiteSpace(project.Title))
       {
-        throw new InvalidDataException("Pozycja 'Tytuł' jest wymagana !");
+        throw new InvalidDataException("Pozycja 'Tytuł' jest wymagana.");
       }
 
       if (string.IsNullOrWhiteSpace(project?.Description))
       {
-        throw new InvalidDataException("Pozycja 'Opis' jest wymagana !");
+        throw new InvalidDataException("Pozycja 'Opis' jest wymagana.");
       }
 
       if (project.Priority > 5 || project.Priority < 0)
       {
-        throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 0 do 5 !");
+        throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 0 do 5.");
       }
 
       if (project.Deadline < DateTime.Now)
       {
-        throw new InvalidDataException("Termin wykonania projektu już minął !");
+        throw new InvalidDataException("Termin wykonania projektu już minął.");
       }
 
       var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
@@ -164,36 +164,36 @@ namespace Domain.Services
 
       if (allProjects.Items.Any(s => s.Title == project.Title))
       {
-        throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Title}!");
+        throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Title}.");
       }
     }
 
-    private async System.Threading.Tasks.Task ValidateChangeProject(Project project)
+    private async System.Threading.Tasks.Task ValidateChangeProject(Change<Project> project)
     {
-      if (!string.IsNullOrWhiteSpace(project.Title))
+      if (project.Updates.Contains(nameof(Project.Title)))
       {
         var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
         var allProjects = await repository.GetAllAsync(input);
 
-        if (allProjects.Items.Any(s => s.Title == project.Title))
+        if (allProjects.Items.Any(s => s.Title == project.Data.Title))
         {
-          throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Title}!");
+          throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Data.Title}.");
         }
       }
 
-      if (project.Priority != 0)
+      if (project.Updates.Contains(nameof(Project.Priority)))
       {
-        if (project.Priority > 5 || project.Priority < 1)
+        if (project.Data.Priority > 5 || project.Data.Priority < 1)
         {
-          throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5 !");
+          throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5.");
         }
       }
 
-      if (project.Deadline.Date != DateTime.MinValue.Date)
+      if (project.Updates.Contains(nameof(Project.Deadline)))
       {
-        if (project.Deadline < DateTime.Now)
+        if (project.Data.Deadline < DateTime.Now)
         {
-          throw new InvalidDataException("Termin wykonania projektu już minął !");
+          throw new InvalidDataException("Termin wykonania projektu już minął.");
         }
       }
     }

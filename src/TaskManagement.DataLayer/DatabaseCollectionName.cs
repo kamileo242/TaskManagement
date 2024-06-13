@@ -6,9 +6,9 @@
   public static class DatabaseCollectionName
   {
     public const string DataChange = "data_change";
-    public const string Project = "project";
-    public const string User = "user";
-    public const string Team = "team";
-    public const string Task = "task";
+    public const string Project = "projects";
+    public const string User = "users";
+    public const string Team = "teams";
+    public const string Task = "tasks";
   }
 }
