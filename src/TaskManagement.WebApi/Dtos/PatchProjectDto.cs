@@ -16,11 +16,6 @@
     public string? Description { get; init; }
 
     /// <summary>
-    /// Priorytet projektu w skali od 1 do 5,
-    /// </summary>
-    public int? Priority { get; init; }
-
-    /// <summary>
     /// Termin wykonania zadania
     /// </summary>
     public DateTime? Deadline { get; init; }

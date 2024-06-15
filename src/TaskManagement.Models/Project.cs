@@ -23,11 +23,6 @@ namespace Models
     public string Description { get; set; }
 
     /// <summary>
-    /// Priorytet projektu w skali od 1 do 5,
-    /// </summary>
-    public int Priority { get; set; }
-
-    /// <summary>
     /// Termin wykonania zadania
     /// </summary>
     public DateTime Deadline { get; set; }

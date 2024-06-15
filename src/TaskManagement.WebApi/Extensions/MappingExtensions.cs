@@ -74,7 +74,6 @@ namespace WebApi.Extensions
     {
       Title = dto.Title,
       Deadline = dto.Deadline.GetValueOrDefault(),
-      Priority = dto.Priority.GetValueOrDefault(),
       Description = dto.Description,
     };
 
@@ -85,7 +84,6 @@ namespace WebApi.Extensions
       {
         Title = dto.Data.Title,
         Deadline = dto.Data.Deadline.GetValueOrDefault(),
-        Priority = dto.Data.Priority.GetValueOrDefault(),
         Description = dto.Data.Description,
       },
       Updates = dto.Updates,

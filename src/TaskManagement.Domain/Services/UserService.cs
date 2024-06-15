@@ -32,23 +32,43 @@ namespace Domain.Services
     public async Task<PageableResult<User>> GetAllAsync(PageableInput input)
       => await repository.GetAllAsync(input);
 
-    public async Task<User> AddAsync(User user)
+    public async Task<User> AddAsync(IHistoryUpdater updater, User user)
     {
       ValidateStoreUser(user);
 
       user.Id = GuidProvider.GenetareGuid();
 
-      return await repository.StoreAsync(user);
+      var result = await repository.StoreAsync(user);
+
+      updater.SetObjectId<User>(result.Id);
+      updater.SetChangeDetails(null, result);
+
+      return result;
     }
 
-    public async Task DeleteAsync(Guid id)
-      => await repository.RemoveAsync(id);
+    public async Task DeleteAsync(IHistoryUpdater updater, Guid id)
+    {
+      updater.SetObjectId<User>(id);
 
-    public async Task<User> Patch(Guid id, Change<User> user)
+      await repository.RemoveAsync(id);
+    }
+
+    public async Task<User> PatchAsync(IHistoryUpdater updater, Guid id, Change<User> user)
     {
       ValidatePatchUser(user);
 
-      return await repository.ChangeOneAsync(id, user);
+      var existingUser = await repository.GetByIdAsync(id);
+      if (existingUser == null)
+      {
+        return null;
+      }
+
+      var result = await repository.ChangeOneAsync(id, user);
+
+      updater.SetObjectId<User>(result.Id);
+      updater.SetChangeDetails(existingUser, result);
+
+      return result;
     }
 
     private void ValidateStoreUser(User user)

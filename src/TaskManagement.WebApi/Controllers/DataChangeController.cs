@@ -2,10 +2,10 @@
 using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Models;
+using Models.Converts;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
 using System.Net.Mime;
-using WebApi.Converts;
 using WebApi.Dtos;
 using WebApi.Examples;
 using WebApi.Extensions;

@@ -12,12 +12,14 @@ namespace ServiceTests
   public class UserServiceTests
   {
     private Mock<IUserRepository> mockRepository;
+    private Mock<IHistoryUpdater> mockUpdater;
     private IUserService userService;
 
     [SetUp]
     public void Setup()
     {
       mockRepository = new Mock<IUserRepository>();
+      mockUpdater = new Mock<IHistoryUpdater>();
       userService = new UserService(mockRepository.Object);
     }
 
@@ -108,7 +110,7 @@ namespace ServiceTests
                       return user;
                     });
 
-      var result = await userService.AddAsync(userToAdd);
+      var result = await userService.AddAsync(mockUpdater.Object, userToAdd);
 
       result.Should().NotBeNull();
       result.Id.Should().Be("00000000000000000000000000000001");
@@ -127,7 +129,7 @@ namespace ServiceTests
         PhoneNumber = "123456789"
       };
 
-      var action = async () => await userService.AddAsync(invalidUser);
+      var action = async () => await userService.AddAsync(mockUpdater.Object, invalidUser);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Pozycja 'Imię' jest wymagana.");
@@ -144,7 +146,7 @@ namespace ServiceTests
         PhoneNumber = "123456789"
       };
 
-      var action = async () => await userService.AddAsync(invalidUser);
+      var action = async () => await userService.AddAsync(mockUpdater.Object, invalidUser);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Pozycja 'Nazwisko' jest wymagana.");
@@ -161,7 +163,7 @@ namespace ServiceTests
         PhoneNumber = "123456789"
       };
 
-      var action = async () => await userService.AddAsync(invalidUser);
+      var action = async () => await userService.AddAsync(mockUpdater.Object, invalidUser);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Pozycja 'Stanowisko' jest wymagana.");
@@ -179,7 +181,7 @@ namespace ServiceTests
         Email = "niewlasciwy"
       };
 
-      var action = async () => await userService.AddAsync(invalidUser);
+      var action = async () => await userService.AddAsync(mockUpdater.Object, invalidUser);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową.");
@@ -197,7 +199,7 @@ namespace ServiceTests
         PhoneNumber = "12345678a"
       };
 
-      var action = async () => await userService.AddAsync(invalidUser);
+      var action = async () => await userService.AddAsync(mockUpdater.Object, invalidUser);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry.");
@@ -208,7 +210,7 @@ namespace ServiceTests
     {
       var userIdToDelete = Guid.Parse("00000000000000000000000000000001");
 
-      await userService.DeleteAsync(userIdToDelete);
+      await userService.DeleteAsync(mockUpdater.Object, userIdToDelete);
 
       mockRepository.Verify(s => s.RemoveAsync(userIdToDelete), Times.Once);
     }
@@ -218,9 +220,8 @@ namespace ServiceTests
     {
       var userId = Guid.Parse("00000000000000000000000000000001");
       var changes = new Change<User>() { Data = new User { Name = "Jack" }, Updates = new List<string> { nameof(User.Name) } };
-      mockRepository.Setup(s => s.ChangeOneAsync(userId, changes)).ReturnsAsync((User) null);
 
-      var result = await userService.Patch(userId, changes);
+      var result = await userService.PatchAsync(mockUpdater.Object, userId, changes);
 
       result.Should().BeNull();
     }
@@ -231,7 +232,7 @@ namespace ServiceTests
       var userId = Guid.Parse("00000000000000000000000000000001");
       var changes = new Change<User>() { Data = new User { Email = "invalid" }, Updates = new List<string> { nameof(User.Email) } };
 
-      var action = async () => await userService.Patch(userId, changes);
+      var action = async () => await userService.PatchAsync(mockUpdater.Object, userId, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową.");
@@ -243,7 +244,7 @@ namespace ServiceTests
       var userId = Guid.Parse("00000000000000000000000000000001");
       var changes = new Change<User>() { Data = new User { PhoneNumber = "123456" }, Updates = new List<string> { nameof(User.PhoneNumber) } };
 
-      var action = async () => await userService.Patch(userId, changes);
+      var action = async () => await userService.PatchAsync(mockUpdater.Object, userId, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry.");
@@ -263,9 +264,10 @@ namespace ServiceTests
         Email = "johnny.deep@example.com",
         PhoneNumber = "123456789"
       };
+      mockRepository.Setup(s => s.GetByIdAsync(expected.Id)).ReturnsAsync(expected);
       mockRepository.Setup(s => s.ChangeOneAsync(userId, changes)).ReturnsAsync(expected);
 
-      var result = await userService.Patch(userId, changes);
+      var result = await userService.PatchAsync(mockUpdater.Object, userId, changes);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);

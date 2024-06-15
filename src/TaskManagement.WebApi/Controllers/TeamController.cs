@@ -1,11 +1,12 @@
 ﻿using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Models;
+using Models.Converts;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
-using WebApi.Converts;
+using TaskManagement.WebApi.Controllers;
 using WebApi.Dtos;
 using WebApi.Examples;
 using WebApi.Extensions;
@@ -18,7 +19,7 @@ namespace WebApi.Controllers
   [SwaggerResponse(StatusCodes.Status400BadRequest, "Błąd po stronie użytkownika, błędne dane wejściowe do usługi.")]
   [SwaggerResponse(StatusCodes.Status404NotFound, "Brak wyszukiwanego zespołu w bazie danych.")]
   [SwaggerResponse(StatusCodes.Status500InternalServerError, "Błąd wewnętrzny po stronie serwera, np. niespójność danych.")]
-  public class TeamController : ControllerBase
+  public class TeamController : BaseController
   {
     public const string GetTeamByIdOperationType = "Pobranie zespołu po identyfikatorze";
     public const string GetAllTeamsByOperationType = "Pobranie wszystkich zespołów";
@@ -29,10 +30,10 @@ namespace WebApi.Controllers
     public const string DeleteUserFromTeamOperationType = "Usunięcie użytkownika z zespołu";
     public const string PatchTeamOperationType = "Zmodyfikowanie zespołu";
 
-    private readonly ITeamService teamService;
+    private readonly ITeamServiceWithHistory teamService;
     private readonly IDtoBuilder dtoBuilder;
 
-    public TeamController(ITeamService teamService, IDtoBuilder dtoBuilder)
+    public TeamController(ITeamServiceWithHistory teamService, IDtoBuilder dtoBuilder)
     {
       this.teamService = teamService;
       this.dtoBuilder = dtoBuilder;
@@ -95,9 +96,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(PostTeamOperationType)]
     public async Task<IActionResult> Post([FromBody] StoreTeamDto teamDto)
     {
-      var team = teamDto.ToModel();
+      var context = CreateContext(PostTeamOperationType);
 
-      var result = await teamService.AddAsync(team);
+      var result = await teamService.AddAsync(context, teamDto.ToModel());
 
       return Ok(dtoBuilder.ConvertToTeamDto(result));
     }
@@ -111,7 +112,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(DeleteTeamOperationType)]
     public async Task<IActionResult> Delete([Required] string id)
     {
-      await teamService.DeleteAsync(id.TextToGuid());
+      var context = CreateContext(DeleteTeamOperationType);
+
+      await teamService.DeleteAsync(context, id.TextToGuid());
 
       return NoContent();
     }
@@ -131,7 +134,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(PostTeamLeaderOperationType)]
     public async Task<IActionResult> SetTeamLeader([Required] string teamId, [Required] string userId)
     {
-      var result = await teamService.AddTeamLeader(teamId.TextToGuid(), userId.TextToGuid());
+      var context = CreateContext(PostTeamLeaderOperationType);
+
+      var result = await teamService.AddTeamLeader(context, teamId.TextToGuid(), userId.TextToGuid());
 
       return result == null
         ? NotFound()
@@ -153,7 +158,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(PostUserToTeamOperationType)]
     public async Task<IActionResult> AddUserToTeam([Required] string teamId, [Required] string userId)
     {
-      var result = await teamService.AddUserToTeam(teamId.TextToGuid(), userId.TextToGuid());
+      var context = CreateContext(PostUserToTeamOperationType);
+
+      var result = await teamService.AddUserToTeam(context, teamId.TextToGuid(), userId.TextToGuid());
 
       return result == null
         ? NotFound()
@@ -173,7 +180,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(DeleteUserFromTeamOperationType)]
     public async Task<IActionResult> DeleteUserFromTeam([Required] string teamId, [Required] string userId)
     {
-      var result = await teamService.DeleteUserFromTeam(teamId.TextToGuid(), userId.TextToGuid());
+      var context = CreateContext(DeleteUserFromTeamOperationType);
+
+      var result = await teamService.DeleteUserFromTeam(context, teamId.TextToGuid(), userId.TextToGuid());
 
       return result == null
         ? NotFound()
@@ -194,7 +203,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(PatchTeamOperationType)]
     public async Task<IActionResult> Patch([Required] string id, [FromBody] ChangeDto<PatchTeamDto> changeTeam)
     {
-      var result = await teamService.Patch(id.TextToGuid(), changeTeam.ToModel());
+      var context = CreateContext(PatchTeamOperationType);
+
+      var result = await teamService.PatchAsync(context, id.TextToGuid(), changeTeam.ToModel());
 
       return result == null
         ? NotFound()

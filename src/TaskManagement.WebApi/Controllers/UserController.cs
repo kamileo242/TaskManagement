@@ -1,11 +1,12 @@
 ﻿using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Models;
+using Models.Converts;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
-using WebApi.Converts;
+using TaskManagement.WebApi.Controllers;
 using WebApi.Dtos;
 using WebApi.Examples;
 using WebApi.Extensions;
@@ -18,7 +19,7 @@ namespace WebApi.Controllers
   [SwaggerResponse(StatusCodes.Status400BadRequest, "Błąd po stronie użytkownika, błędne dane wejściowe do usługi.")]
   [SwaggerResponse(StatusCodes.Status404NotFound, "Brak wyszukiwanego użytkownika w bazie danych.")]
   [SwaggerResponse(StatusCodes.Status500InternalServerError, "Błąd wewnętrzny po stronie serwera, np. niespójność danych.")]
-  public class UserController : ControllerBase
+  public class UserController : BaseController
   {
     public const string GetUserByIdOperationType = "Pobranie użytkownika po identyfikatorze";
     public const string GetAllUsersByOperationType = "Pobranie wszystkich użytkowników";
@@ -26,10 +27,10 @@ namespace WebApi.Controllers
     public const string DeleteUserOperationType = "Usunięcie użytkownika";
     public const string PatchUserOperationType = "Zmodyfikowanie użytkownika";
 
-    private readonly IUserService userService;
+    private readonly IUserServiceWithHistory userService;
     private readonly IDtoBuilder dtoBuilder;
 
-    public UserController(IUserService userService, IDtoBuilder dtoBuilder)
+    public UserController(IUserServiceWithHistory userService, IDtoBuilder dtoBuilder)
     {
       this.userService = userService;
       this.dtoBuilder = dtoBuilder;
@@ -93,9 +94,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(PostUserOperationType)]
     public async Task<IActionResult> Post([FromBody] StoreUserDto userDto)
     {
-      var user = userDto.ToModel();
+      var context = CreateContext(PostUserOperationType);
 
-      var result = await userService.AddAsync(user);
+      var result = await userService.AddAsync(context, userDto.ToModel());
 
       return Ok(dtoBuilder.ConvertToUserDto(result));
     }
@@ -110,7 +111,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(DeleteUserOperationType)]
     public async Task<IActionResult> Delete([Required] string id)
     {
-      await userService.DeleteAsync(id.TextToGuid());
+      var context = CreateContext(DeleteUserOperationType);
+
+      await userService.DeleteAsync(context, id.TextToGuid());
 
       return NoContent();
     }
@@ -128,7 +131,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(PatchUserOperationType)]
     public async Task<IActionResult> Patch([Required] string id, [FromBody] ChangeDto<PatchUserDto> changeUser)
     {
-      var result = await userService.Patch(id.TextToGuid(), changeUser.ToModel());
+      var context = CreateContext(PatchUserOperationType);
+
+      var result = await userService.PatchAsync(context, id.TextToGuid(), changeUser.ToModel());
 
       return result == null
         ? NotFound()
