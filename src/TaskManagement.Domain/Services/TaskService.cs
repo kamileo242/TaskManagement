@@ -29,23 +29,29 @@ namespace Domain.Services
     public async Task<PageableResult<Models.Task>> GetAllAsync(PageableInput input)
       => await repository.GetAllAsync(input);
 
-    public async Task<Models.Task> AddAsync(Guid projectId, Models.Task task)
+    public async Task<Models.Task> AddAsync(IHistoryUpdater updater, Guid projectId, Models.Task task)
     {
       await ValidateStoreTask(projectId, task);
-
       task.Id = GuidProvider.GenetareGuid();
-      task.Status = TaskStatus.NotStarted;
-      task.CreatedAt = TimeProvider.GetTime();
 
-      ChangeProjectStatusAndAddTaskId(projectId, task.Id);
+      ChangeProjectStatusAndAddTaskId(updater, projectId, task.Id);
 
-      return await repository.StoreAsync(task);
+      var result = await repository.StoreAsync(task);
+
+      updater.SetObjectId<Models.Task>(result.Id);
+      updater.SetChangeDetails(null, result);
+
+      return result;
     }
 
-    public async System.Threading.Tasks.Task DeleteAsync(Guid id)
-      => await repository.RemoveAsync(id);
+    public async System.Threading.Tasks.Task DeleteAsync(IHistoryUpdater updater, Guid id)
+    {
+      updater.SetObjectId<Models.Task>(id);
 
-    public async Task<Models.Task> RegisterTimeAsync(Guid taskId, int timeInMinutes)
+      await repository.RemoveAsync(id);
+    }
+
+    public async Task<Models.Task> RegisterTimeAsync(IHistoryUpdater updater, Guid taskId, int timeInMinutes)
     {
       var task = await GetByIdAsync(taskId);
 
@@ -53,6 +59,20 @@ namespace Domain.Services
       {
         return null;
       }
+
+      var originalTask = new Models.Task
+      {
+        Id = task.Id,
+        Title = task.Title,
+        Deadline = task.Deadline,
+        Description = task.Description,
+        AssignedPersonId = task.AssignedPersonId,
+        Comments = task.Comments,
+        CreatedAt = task.CreatedAt,
+        Priority = task.Priority,
+        SpentTime = task.SpentTime,
+        Status = task.Status,
+      };
 
       task.Status = TaskStatus.Started;
       task.SpentTime = task.SpentTime + timeInMinutes;
@@ -63,10 +83,15 @@ namespace Domain.Services
         Updates = new List<string> { nameof(task.SpentTime), nameof(task.Status) }
       };
 
-      return await Patch(taskId, changes);
+      var result = await Patch(taskId, changes);
+
+      updater.SetObjectId<Models.Task>(result.Id);
+      updater.SetChangeDetails(originalTask, result);
+
+      return result;
     }
 
-    public async Task<Models.Task> AssignPersonToTaskAsync(Guid taskId, Guid userId)
+    public async Task<Models.Task> AssignPersonToTaskAsync(IHistoryUpdater updater, Guid taskId, Guid userId)
     {
       var task = await GetByIdAsync(taskId);
 
@@ -74,6 +99,20 @@ namespace Domain.Services
       {
         return null;
       }
+
+      var originalTask = new Models.Task
+      {
+        Id = task.Id,
+        Title = task.Title,
+        Deadline = task.Deadline,
+        Description = task.Description,
+        AssignedPersonId = task.AssignedPersonId,
+        Comments = task.Comments,
+        CreatedAt = task.CreatedAt,
+        Priority = task.Priority,
+        SpentTime = task.SpentTime,
+        Status = task.Status,
+      };
 
       var exisitng = await userService.GetByIdAsync(userId);
 
@@ -90,10 +129,15 @@ namespace Domain.Services
         Updates = new List<string> { nameof(Models.Task.AssignedPersonId) }
       };
 
-      return await Patch(taskId, changes);
+      var result = await Patch(taskId, changes);
+
+      updater.SetObjectId<Models.Task>(result.Id);
+      updater.SetChangeDetails(originalTask, result);
+
+      return result;
     }
 
-    public async Task<Models.Task> EndTaskStatusAsync(Guid taskId)
+    public async Task<Models.Task> EndTaskStatusAsync(IHistoryUpdater updater, Guid taskId)
     {
       var task = await GetByIdAsync(taskId);
 
@@ -102,6 +146,7 @@ namespace Domain.Services
         return null;
       }
 
+      var oldStatus = task.Status.Value;
       task.Status = TaskStatus.Ended;
 
       var changes = new Change<Models.Task>
@@ -110,10 +155,15 @@ namespace Domain.Services
         Updates = new List<string> { nameof(Models.Task.Status) }
       };
 
-      return await Patch(taskId, changes);
+      var result = await Patch(taskId, changes);
+
+      updater.SetObjectId<Models.Task>(result.Id);
+      updater.SetChangeDetailsStatus(oldStatus, result.Status.Value);
+
+      return result;
     }
 
-    public async Task<Models.Task> AddCommentAsync(Guid taskId, Comment comment)
+    public async Task<Models.Task> AddCommentAsync(IHistoryUpdater updater, Guid taskId, Comment comment)
     {
       var task = await repository.GetByIdAsync(taskId);
 
@@ -121,6 +171,20 @@ namespace Domain.Services
       {
         return null;
       }
+
+      var originalTask = new Models.Task
+      {
+        Id = task.Id,
+        Title = task.Title,
+        Deadline = task.Deadline,
+        Description = task.Description,
+        AssignedPersonId = task.AssignedPersonId,
+        Comments = task.Comments,
+        CreatedAt = task.CreatedAt,
+        Priority = task.Priority,
+        SpentTime = task.SpentTime,
+        Status = task.Status,
+      };
 
       comment.Id = GuidProvider.GenetareGuid();
       comment.CreatedAt = TimeProvider.GetTime();
@@ -134,10 +198,15 @@ namespace Domain.Services
         Updates = new List<string> { nameof(task.Comments) }
       };
 
-      return await Patch(taskId, changes);
+      var result = await Patch(taskId, changes);
+
+      updater.SetObjectId<Models.Task>(result.Id);
+      updater.SetChangeDetailsList(originalTask, result);
+
+      return result;
     }
 
-    public async Task<Models.Task> DeleteCommentAsync(Guid taskId, Guid commentId)
+    public async Task<Models.Task> DeleteCommentAsync(IHistoryUpdater updater, Guid taskId, Guid commentId)
     {
       var task = await repository.GetByIdAsync(taskId);
 
@@ -145,6 +214,20 @@ namespace Domain.Services
       {
         return null;
       }
+
+      var originalTask = new Models.Task
+      {
+        Id = task.Id,
+        Title = task.Title,
+        Deadline = task.Deadline,
+        Description = task.Description,
+        AssignedPersonId = task.AssignedPersonId,
+        Comments = task.Comments,
+        CreatedAt = task.CreatedAt,
+        Priority = task.Priority,
+        SpentTime = task.SpentTime,
+        Status = task.Status,
+      };
 
       task.Comments = (task.Comments ?? new List<Comment>())
         .Where(s => s.Id != commentId)
@@ -157,10 +240,33 @@ namespace Domain.Services
         Updates = new List<string> { nameof(task.Comments) }
       };
 
-      return await Patch(taskId, changes);
+      var result = await Patch(taskId, changes);
+
+      updater.SetObjectId<Models.Task>(result.Id);
+      updater.SetChangeDetailsList(originalTask, result);
+
+      return result;
     }
 
-    public async Task<Models.Task> Patch(Guid id, Change<Models.Task> task)
+    public async Task<Models.Task> PatchAsync(IHistoryUpdater updater, Guid id, Change<Models.Task> task)
+    {
+      var existingTask = await repository.GetByIdAsync(id);
+
+      if (existingTask == null)
+      {
+        return null;
+      }
+
+      var result = await Patch(id, task);
+
+      updater.SetObjectId<Models.Task>(result.Id);
+      updater.SetChangeDetails(existingTask, result);
+
+      return result;
+    }
+
+
+    private async Task<Models.Task> Patch(Guid id, Change<Models.Task> task)
     {
       await ValidateChangeTask(task);
 
@@ -212,7 +318,7 @@ namespace Domain.Services
 
     private async System.Threading.Tasks.Task ValidateChangeTask(Change<Models.Task> task)
     {
-      if (task.Updates.Contains(nameof(Models.Task.Priority)))
+      if (task.Updates.Contains(nameof(Models.Task.Priority), StringComparer.InvariantCultureIgnoreCase))
       {
         if (task.Data.Priority > 5 || task.Data.Priority < 1)
         {
@@ -220,7 +326,7 @@ namespace Domain.Services
         }
       }
 
-      if (task.Updates.Contains(nameof(Models.Task.Deadline)))
+      if (task.Updates.Contains(nameof(Models.Task.Deadline), StringComparer.InvariantCultureIgnoreCase))
       {
         if (task.Data.Deadline < DateTime.Now)
         {
@@ -228,7 +334,7 @@ namespace Domain.Services
         }
       }
 
-      if (task.Updates.Contains(nameof(Models.Task.Title)))
+      if (task.Updates.Contains(nameof(Models.Task.Title), StringComparer.InvariantCultureIgnoreCase))
       {
         var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
         var allTasks = await repository.GetAllAsync(input);
@@ -240,7 +346,7 @@ namespace Domain.Services
       }
     }
 
-    private async void ChangeProjectStatusAndAddTaskId(Guid projectId, Guid taskId)
+    private async void ChangeProjectStatusAndAddTaskId(IHistoryUpdater updater, Guid projectId, Guid taskId)
     {
       var project = await projectService.GetByIdAsync(projectId);
 
@@ -258,7 +364,7 @@ namespace Domain.Services
         Updates = new List<string> { nameof(project.TaskIds), nameof(project.Status) }
       };
 
-      await projectService.Patch(projectId, changes);
+      await projectService.PatchAsync(updater, projectId, changes);
     }
   }
 }

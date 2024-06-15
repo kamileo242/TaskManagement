@@ -88,10 +88,6 @@ namespace DataLayer.Repositories
       {
         await collection.InsertOneAsync(dbo);
       }
-      else
-      {
-        await collection.ReplaceOneAsync(filter, dbo);
-      }
 
       return await Task.FromResult(converter.Convert<TEntity>(dbo));
     }

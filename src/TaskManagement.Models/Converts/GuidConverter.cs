@@ -1,4 +1,4 @@
-﻿namespace WebApi.Converts
+﻿namespace Models.Converts
 {
   /// <summary>
   /// Klasa konwertująca typy zmiennych

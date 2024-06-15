@@ -4,9 +4,9 @@ using Task = System.Threading.Tasks.Task;
 namespace Domain
 {
   /// <summary>
-  /// Zbiór operacji wykonywanych na serwisie zespołu
+  /// Zbiór operacji zapisujących historię zmian dla operacji wykonywanych na zespołach
   /// </summary>
-  public interface ITeamService
+  public interface ITeamServiceWithHistory
   {
     /// <summary>
     /// Pobierz zespół po id
@@ -26,13 +26,13 @@ namespace Domain
     /// </summary>
     /// <param name="team">Zespół</param>
     /// <returns>Nowy zespół</returns>
-    Task<Team> AddAsync(IHistoryUpdater updater, Team team);
+    Task<Team> AddAsync(OperationContext context, Team team);
 
     /// <summary>
     /// Usuń zespół
     /// </summary>
     /// <param name="id">Identyfikator zespołu</param>
-    Task DeleteAsync(IHistoryUpdater updater, Guid id);
+    Task DeleteAsync(OperationContext context, Guid id);
 
     /// <summary>
     /// Dodaj pracownika do zespołu
@@ -40,7 +40,7 @@ namespace Domain
     /// <param name="teamId">Identyfikator zespołu</param>
     /// <param name="userId">Identyfikator pracownika</param>
     /// <returns>Zespół z dodanym pracownikiem</returns>
-    Task<Team> AddUserToTeam(IHistoryUpdater updater, Guid teamId, Guid userId);
+    Task<Team> AddUserToTeam(OperationContext context, Guid teamId, Guid userId);
 
     /// <summary>
     /// Ustal leadera zespołu
@@ -48,7 +48,7 @@ namespace Domain
     /// <param name="teamId">Identyfikator zespołu</param>
     /// <param name="userId">Identyfikator leadera zespołu</param>
     /// <returns>Zespół z leaderem</returns>
-    Task<Team> AddTeamLeader(IHistoryUpdater updater, Guid teamId, Guid userId);
+    Task<Team> AddTeamLeader(OperationContext context, Guid teamId, Guid userId);
 
     /// <summary>
     /// Usuń pracownika z zespołu
@@ -56,7 +56,7 @@ namespace Domain
     /// <param name="teamId">Identyfikator zespołu</param>
     /// <param name="userId">Identyfikator pracownika</param>
     /// <returns>Zespół z usuniętym pracownikiem</returns>
-    Task<Team> DeleteUserFromTeam(IHistoryUpdater updater, Guid teamId, Guid userId);
+    Task<Team> DeleteUserFromTeam(OperationContext context, Guid teamId, Guid userId);
 
     /// <summary>
     /// Zmień wybrane właściwości zespołu
@@ -64,6 +64,6 @@ namespace Domain
     /// <param name="id">Identyfikator zespołu</param>
     /// <param name="team">Dane zespołu do modyfikacji</param>
     /// <returns>Zmodyfikowany zespół</returns>
-    Task<Team> PatchAsync(IHistoryUpdater updater, Guid id, Change<Team> team);
+    Task<Team> PatchAsync(OperationContext context, Guid id, Change<Team> team);
   }
 }

@@ -1,11 +1,12 @@
 ﻿using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Models;
+using Models.Converts;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
-using WebApi.Converts;
+using TaskManagement.WebApi.Controllers;
 using WebApi.Dtos;
 using WebApi.Examples;
 using WebApi.Extensions;
@@ -18,7 +19,7 @@ namespace WebApi.Controllers
   [SwaggerResponse(StatusCodes.Status400BadRequest, "Błąd po stronie użytkownika, błędne dane wejściowe do usługi.")]
   [SwaggerResponse(StatusCodes.Status404NotFound, "Brak wyszukiwanego zadania w bazie danych.")]
   [SwaggerResponse(StatusCodes.Status500InternalServerError, "Błąd wewnętrzny po stronie serwera, np. niespójność danych.")]
-  public class TaskController : Controller
+  public class TaskController : BaseController
   {
     public const string GetTaskByIdOperationType = "Pobranie zadania po identyfikatorze";
     public const string GetAllTasksByOperationType = "Pobranie wszystkich zadan";
@@ -31,9 +32,9 @@ namespace WebApi.Controllers
     public const string SetTimeSpanToTaskOperationType = "Zarejestrowanie czasu pracy";
     public const string PatchTaskOperationType = "Zmodyfikowanie zadania";
 
-    private readonly ITaskService taskService;
+    private readonly ITaskServiceWithHistory taskService;
     private readonly IDtoBuilder dtoBuilder;
-    public TaskController(ITaskService taskService, IDtoBuilder dtoBuilder)
+    public TaskController(ITaskServiceWithHistory taskService, IDtoBuilder dtoBuilder)
     {
       this.taskService = taskService;
       this.dtoBuilder = dtoBuilder;
@@ -97,7 +98,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(PostTaskOperationType)]
     public async Task<IActionResult> Post([Required] string projectId, [FromBody] StoreTaskDto taskDto)
     {
-      var result = await taskService.AddAsync(projectId.TextToGuid(), taskDto.ToModel());
+      var context = CreateContext(PostTaskOperationType);
+
+      var result = await taskService.AddAsync(context, projectId.TextToGuid(), taskDto.ToModel());
 
       return Ok(dtoBuilder.ConvertToTaskDto(result));
     }
@@ -111,7 +114,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(DeleteTaskOperationType)]
     public async Task<IActionResult> Delete([Required] string id)
     {
-      await taskService.DeleteAsync(id.TextToGuid());
+      var context = CreateContext(DeleteTaskOperationType);
+
+      await taskService.DeleteAsync(context, id.TextToGuid());
 
       return NoContent();
     }
@@ -129,7 +134,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(EndTaskOperationType)]
     public async Task<IActionResult> EndProject([Required] string projectId)
     {
-      var result = await taskService.EndTaskStatusAsync(projectId.TextToGuid());
+      var context = CreateContext(EndTaskOperationType);
+
+      var result = await taskService.EndTaskStatusAsync(context, projectId.TextToGuid());
 
       return result == null
       ? NotFound()
@@ -150,7 +157,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(PostCommentOperationType)]
     public async Task<IActionResult> AddCommentToTask([Required] string id, [FromBody] StoreCommentDto commentDto)
     {
-      var result = await taskService.AddCommentAsync(id.TextToGuid(), commentDto.ToModel());
+      var context = CreateContext(PostCommentOperationType);
+
+      var result = await taskService.AddCommentAsync(context, id.TextToGuid(), commentDto.ToModel());
 
       return result == null
       ? NotFound()
@@ -171,7 +180,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(DeleteCommentOperationType)]
     public async Task<IActionResult> DeleteCommentFromProject([Required] string taskId, [Required] string commentId)
     {
-      var result = await taskService.DeleteCommentAsync(taskId.TextToGuid(), commentId.TextToGuid());
+      var context = CreateContext(DeleteCommentOperationType);
+
+      var result = await taskService.DeleteCommentAsync(context, taskId.TextToGuid(), commentId.TextToGuid());
 
       return result == null
       ? NotFound()
@@ -192,7 +203,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(SetUserToTaskOperationType)]
     public async Task<IActionResult> AssignPersonToTask([Required] string projectId, [Required] string userId)
     {
-      var result = await taskService.AssignPersonToTaskAsync(projectId.TextToGuid(), userId.TextToGuid());
+      var context = CreateContext(SetUserToTaskOperationType);
+
+      var result = await taskService.AssignPersonToTaskAsync(context, projectId.TextToGuid(), userId.TextToGuid());
 
       return result == null
       ? NotFound()
@@ -213,7 +226,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(SetTimeSpanToTaskOperationType)]
     public async Task<IActionResult> RegisterTime([Required] string projectId, int timeInMinutes)
     {
-      var result = await taskService.RegisterTimeAsync(projectId.TextToGuid(), timeInMinutes);
+      var context = CreateContext(SetTimeSpanToTaskOperationType);
+
+      var result = await taskService.RegisterTimeAsync(context, projectId.TextToGuid(), timeInMinutes);
 
       return result == null
       ? NotFound()
@@ -233,7 +248,9 @@ namespace WebApi.Controllers
     [SwaggerOperation(PatchTaskOperationType)]
     public async Task<IActionResult> Patch([Required] string id, [FromBody] ChangeDto<PatchTaskDto> changeTask)
     {
-      var result = await taskService.Patch(id.TextToGuid(), changeTask.ToModel());
+      var context = CreateContext(PatchTaskOperationType);
+
+      var result = await taskService.PatchAsync(context, id.TextToGuid(), changeTask.ToModel());
 
       return result == null
       ? NotFound()

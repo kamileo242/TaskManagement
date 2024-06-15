@@ -4,9 +4,9 @@ using Task = System.Threading.Tasks.Task;
 namespace Domain
 {
   /// <summary>
-  /// Zbiór operacji wykonywanych na serwisie użytkownika
+  /// Zbiór operacji zapisujących historię zmian dla operacji wykonywanych na użytkownikach
   /// </summary>
-  public interface IUserService
+  public interface IUserServiceWithHistory
   {
     /// <summary>
     /// Pobierz użytkownika po id
@@ -14,13 +14,6 @@ namespace Domain
     /// <param name="id">Identyfikator użytkownika</param>
     /// <returns>Użytkownik</returns>
     Task<User> GetByIdAsync(Guid id);
-
-    /// <summary>
-    /// Pobierz użytkownika po id
-    /// </summary>
-    /// <param name="id">Identyfikator użytkownika</param>
-    /// <returns>Użytkownik</returns>
-    User GetById(Guid id);
 
     /// <summary>
     /// Pobierz wszytskich użytkowników
@@ -34,13 +27,13 @@ namespace Domain
     /// </summary>
     /// <param name="user">Użytkownik</param>
     /// <returns>Nowy użytkownik</returns>
-    Task<User> AddAsync(IHistoryUpdater updater, User user);
+    Task<User> AddAsync(OperationContext context, User user);
 
     /// <summary>
     /// Usuń użytkownika
     /// </summary>
     /// <param name="id">Identyfikator użytkownika</param>
-    Task DeleteAsync(IHistoryUpdater updater, Guid id);
+    Task DeleteAsync(OperationContext context, Guid id);
 
     /// <summary>
     /// Zmień wybrane właściwości użytkownika
@@ -48,6 +41,6 @@ namespace Domain
     /// <param name="id">Identyfikator użytkownika</param>
     /// <param name="user">Dane użytkownika do modyfikacji</param>
     /// <returns>Zmodyfikowany użytkownik</returns>
-    Task<User> PatchAsync(IHistoryUpdater updater, Guid id, Change<User> user);
+    Task<User> PatchAsync(OperationContext context, Guid id, Change<User> user);
   }
 }

@@ -1,5 +1,4 @@
 ﻿using DataLayer;
-using Domain.Providers;
 using Models;
 using Task = System.Threading.Tasks.Task;
 
@@ -22,25 +21,41 @@ namespace Domain.Services
     public async Task<PageableResult<Team>> GetAllAsync(PageableInput input)
       => await repository.GetAllAsync(input);
 
-    public async Task<Team> AddAsync(Team team)
+    public async Task<Team> AddAsync(IHistoryUpdater updater, Team team)
     {
       await ValidateTeamName(team.Name);
 
-      team.Id = GuidProvider.GenetareGuid();
+      var result = await repository.StoreAsync(team);
 
-      return await repository.StoreAsync(team);
+      updater.SetObjectId<Team>(result.Id);
+      updater.SetChangeDetails(null, result);
+
+      return result;
     }
 
-    public async Task DeleteAsync(Guid id)
-      => await repository.RemoveAsync(id);
+    public async Task DeleteAsync(IHistoryUpdater updater, Guid id)
+    {
+      updater.SetObjectId<Team>(id);
 
-    public async Task<Team> AddTeamLeader(Guid teamId, Guid userId)
+      await repository.RemoveAsync(id);
+    }
+
+    public async Task<Team> AddTeamLeader(IHistoryUpdater updater, Guid teamId, Guid userId)
     {
       var team = await repository.GetByIdAsync(teamId);
+
       if (team == null)
       {
         return null;
       }
+
+      var originalTeam = new Team
+      {
+        Id = team.Id,
+        Name = team.Name,
+        TeamLeaderId = team.TeamLeaderId,
+        UserIds = team.UserIds
+      };
 
       await ValidateUserInTeam(teamId, userId);
 
@@ -52,10 +67,16 @@ namespace Domain.Services
         Updates = new List<string> { nameof(team.TeamLeaderId) }
       };
 
-      return await Patch(teamId, changes);
+      var result = await Patch(teamId, changes);
+
+      updater.SetObjectId<Team>(result.Id);
+      updater.SetChangeDetails(originalTeam, result);
+
+      return result;
     }
 
-    public async Task<Team> AddUserToTeam(Guid teamId, Guid userId)
+
+    public async Task<Team> AddUserToTeam(IHistoryUpdater updater, Guid teamId, Guid userId)
     {
       var team = await repository.GetByIdAsync(teamId);
 
@@ -63,6 +84,14 @@ namespace Domain.Services
       {
         return null;
       }
+
+      var originalTeam = new Team
+      {
+        Id = team.Id,
+        Name = team.Name,
+        TeamLeaderId = team.TeamLeaderId,
+        UserIds = team.UserIds
+      };
 
       await ValidateUserInTeam(teamId, userId);
 
@@ -78,10 +107,15 @@ namespace Domain.Services
         Updates = new List<string> { nameof(team.UserIds) }
       };
 
-      return await Patch(teamId, changes);
+      var result = await Patch(teamId, changes);
+
+      updater.SetObjectId<Team>(result.Id);
+      updater.SetChangeDetailsList(originalTeam, result);
+
+      return result;
     }
 
-    public async Task<Team> DeleteUserFromTeam(Guid teamId, Guid userId)
+    public async Task<Team> DeleteUserFromTeam(IHistoryUpdater updater, Guid teamId, Guid userId)
     {
       var team = await repository.GetByIdAsync(teamId);
 
@@ -89,6 +123,14 @@ namespace Domain.Services
       {
         return null;
       }
+
+      var originalTeam = new Team
+      {
+        Id = team.Id,
+        Name = team.Name,
+        TeamLeaderId = team.TeamLeaderId,
+        UserIds = team.UserIds
+      };
 
       team.UserIds = (team.UserIds ?? new List<Guid>())
         .Where(s => s != userId)
@@ -101,12 +143,34 @@ namespace Domain.Services
         Updates = new List<string> { nameof(team.UserIds) }
       };
 
-      return await Patch(teamId, changes);
+      var result = await Patch(teamId, changes);
+
+      updater.SetObjectId<Team>(result.Id);
+      updater.SetChangeDetailsList(originalTeam, result);
+
+      return result;
     }
 
-    public async Task<Team> Patch(Guid id, Change<Team> team)
+    public async Task<Team> PatchAsync(IHistoryUpdater updater, Guid id, Change<Team> team)
     {
-      if (team.Updates.Contains(nameof(Team.Name)))
+      var existingTeam = await repository.GetByIdAsync(id);
+
+      if (existingTeam == null)
+      {
+        return null;
+      }
+
+      var result = await Patch(id, team);
+
+      updater.SetObjectId<Team>(result.Id);
+      updater.SetChangeDetails(existingTeam, result);
+
+      return result;
+    }
+
+    private async Task<Team> Patch(Guid id, Change<Team> team)
+    {
+      if (team.Updates.Contains(nameof(Team.Name), StringComparer.InvariantCultureIgnoreCase))
       {
         await ValidateTeamName(team.Data.Name);
       }

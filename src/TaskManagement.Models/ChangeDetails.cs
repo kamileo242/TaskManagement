@@ -19,5 +19,12 @@
     /// Nowa wartość
     /// </summary>
     public string NewValue { get; set; }
+
+    public ChangeDetails(string propertyName, string oldValue, string newValue)
+    {
+      PropertyName = propertyName;
+      OldValue = oldValue;
+      NewValue = newValue;
+    }
   }
 }

@@ -10,7 +10,6 @@ namespace WebApi.Examples
       {
         Title = "Utworzenie aplikacji do zarządzania projektami",
         Description = "Aplikacja powinna zawierać takie encje jak Użytkownik, Projekt, Zadanie, Historia zmian oraz Zespół",
-        Priority = 1,
         Deadline = DateTime.Parse("2024-10-01")
       };
   }

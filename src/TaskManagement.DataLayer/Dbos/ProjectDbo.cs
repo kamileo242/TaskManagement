@@ -30,13 +30,6 @@ namespace DataLayer.Dbos
     public string Description { get; set; }
 
     /// <summary>
-    /// Priorytet projektu w skali od 1 do 5,
-    /// </summary>
-    [BsonRequired]
-    [BsonElement("priority")]
-    public int Priority { get; set; }
-
-    /// <summary>
     /// Termin wykonania zadania
     /// </summary>
     [BsonDateTimeOptions(Kind = DateTimeKind.Local)]

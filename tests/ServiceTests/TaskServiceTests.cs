@@ -16,6 +16,7 @@ namespace ServiceTests
     private Mock<ITaskRepository> mockRepository;
     private Mock<IProjectService> mockProjectService;
     private Mock<IUserService> mockUserService;
+    private Mock<IHistoryUpdater> mockUpdater;
     private ITaskService taskService;
 
     [SetUp]
@@ -24,6 +25,7 @@ namespace ServiceTests
       mockRepository = new Mock<ITaskRepository>();
       mockProjectService = new Mock<IProjectService>();
       mockUserService = new Mock<IUserService>();
+      mockUpdater = new Mock<IHistoryUpdater>();
       taskService = new TaskService(mockRepository.Object, mockProjectService.Object, mockUserService.Object);
     }
 
@@ -126,7 +128,6 @@ namespace ServiceTests
         Id = Guid.Parse("00000000000000000000000000000002"),
         Title = "Zadanie testowy",
         Description = "Opis zadania testowego",
-        Priority = 1,
         Deadline = DateTime.Parse("2024-05-05"),
         Status = ProjectStatus.NotStarted
       };
@@ -140,9 +141,9 @@ namespace ServiceTests
                 return task;
               });
       mockProjectService.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(project);
-      mockProjectService.Setup(s => s.Patch(projectId, It.IsAny<Change<Project>>())).ReturnsAsync(It.IsAny<Project>());
+      mockProjectService.Setup(s => s.PatchAsync(mockUpdater.Object, projectId, It.IsAny<Change<Project>>())).ReturnsAsync(It.IsAny<Project>());
 
-      var result = await taskService.AddAsync(projectId, taskToAdd);
+      var result = await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(taskToAdd, o => o
@@ -166,7 +167,7 @@ namespace ServiceTests
         Priority = 1,
       };
 
-      var action = async () => await taskService.AddAsync(projectId, taskToAdd);
+      var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Pozycja 'Tytuł' jest wymagana.");
@@ -208,7 +209,7 @@ namespace ServiceTests
       };
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(tasks);
 
-      var action = async () => await taskService.AddAsync(projectId, taskToAdd);
+      var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage($"Istnieje już zadanie o nazwie {taskToAdd.Title}.");
@@ -238,7 +239,7 @@ namespace ServiceTests
       };
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(tasks);
 
-      var action = async () => await taskService.AddAsync(projectId, taskToAdd);
+      var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Priorytet musi mieścić się w zakresie od 1 do 5.");
@@ -268,7 +269,7 @@ namespace ServiceTests
       };
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(tasks);
 
-      var action = async () => await taskService.AddAsync(projectId, taskToAdd);
+      var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Termin wykonania zadania już minął.");
@@ -299,7 +300,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(tasks);
       mockProjectService.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync((Project) null);
 
-      var action = async () => await taskService.AddAsync(projectId, taskToAdd);
+      var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage($"Nie znlaziono projektu o identyfikatorze {projectId}.");
@@ -332,14 +333,13 @@ namespace ServiceTests
         Id = Guid.Parse("00000000000000000000000000000002"),
         Title = "Zadanie testowy",
         Description = "Opis zadania testowego",
-        Priority = 1,
         Deadline = DateTime.Parse("2024-05-05"),
         Status = ProjectStatus.Ended
       };
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(tasks);
       mockProjectService.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync(project);
 
-      var action = async () => await taskService.AddAsync(projectId, taskToAdd);
+      var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Nie można dodać zadania do zakończonego projektu.");
@@ -350,7 +350,7 @@ namespace ServiceTests
     {
       var taskId = Guid.Parse("00000000000000000000000000000001");
 
-      await taskService.DeleteAsync(taskId);
+      await taskService.DeleteAsync(mockUpdater.Object, taskId);
 
       mockRepository.Verify(s => s.RemoveAsync(taskId), Times.Once);
     }
@@ -384,7 +384,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(task);
       mockRepository.Setup(s => s.ChangeOneAsync(taskId, It.IsAny<Change<Models.Task>>())).ReturnsAsync(expected);
 
-      var result = await taskService.RegisterTimeAsync(taskId, 120);
+      var result = await taskService.RegisterTimeAsync(mockUpdater.Object, taskId, 120);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);
@@ -396,7 +396,7 @@ namespace ServiceTests
       var taskId = Guid.Parse("00000000000000000000000000000001");
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync((Models.Task) null);
 
-      var result = await taskService.RegisterTimeAsync(taskId, 120);
+      var result = await taskService.RegisterTimeAsync(mockUpdater.Object, taskId, 120);
 
       result.Should().BeNull();
     }
@@ -442,7 +442,7 @@ namespace ServiceTests
       mockUserService.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(user);
       mockRepository.Setup(s => s.ChangeOneAsync(taskId, It.IsAny<Change<Models.Task>>())).ReturnsAsync(expected);
 
-      var result = await taskService.AssignPersonToTaskAsync(taskId, userId);
+      var result = await taskService.AssignPersonToTaskAsync(mockUpdater.Object, taskId, userId);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);
@@ -455,7 +455,7 @@ namespace ServiceTests
       var userId = Guid.Parse("00000000000000000000000000000002");
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync((Models.Task) null);
 
-      var result = await taskService.AssignPersonToTaskAsync(taskId, userId);
+      var result = await taskService.AssignPersonToTaskAsync(mockUpdater.Object, taskId, userId);
 
       result.Should().BeNull();
     }
@@ -479,7 +479,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(task);
       mockUserService.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync((User) null);
 
-      var action = async () => await taskService.AssignPersonToTaskAsync(taskId, userId);
+      var action = async () => await taskService.AssignPersonToTaskAsync(mockUpdater.Object, taskId, userId);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage($"Nie znaleziono użytkownika o Id: {userId}.");
@@ -514,7 +514,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(task);
       mockRepository.Setup(s => s.ChangeOneAsync(taskId, It.IsAny<Change<Models.Task>>())).ReturnsAsync(expected);
 
-      var result = await taskService.EndTaskStatusAsync(taskId);
+      var result = await taskService.EndTaskStatusAsync(mockUpdater.Object, taskId);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);
@@ -526,7 +526,7 @@ namespace ServiceTests
       var taskId = Guid.Parse("00000000000000000000000000000001");
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync((Models.Task) null);
 
-      var result = await taskService.EndTaskStatusAsync(taskId);
+      var result = await taskService.EndTaskStatusAsync(mockUpdater.Object, taskId);
 
       result.Should().BeNull();
     }
@@ -573,7 +573,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(task);
       mockRepository.Setup(s => s.ChangeOneAsync(taskId, It.IsAny<Change<Models.Task>>())).ReturnsAsync(expected);
 
-      var result = await taskService.AddCommentAsync(taskId, newComment);
+      var result = await taskService.AddCommentAsync(mockUpdater.Object, taskId, newComment);
 
       var endTestTime = DateTime.Now;
       result.Should().NotBeNull();
@@ -595,7 +595,7 @@ namespace ServiceTests
       };
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync((Models.Task) null);
 
-      var result = await taskService.AddCommentAsync(taskId, newComment);
+      var result = await taskService.AddCommentAsync(mockUpdater.Object, taskId, newComment);
 
       result.Should().BeNull();
     }
@@ -607,7 +607,7 @@ namespace ServiceTests
       var commentId = Guid.Parse("00000000000000000000000000000002");
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync((Models.Task) null);
 
-      var result = await taskService.DeleteCommentAsync(taskId, commentId);
+      var result = await taskService.DeleteCommentAsync(mockUpdater.Object, taskId, commentId);
 
       result.Should().BeNull();
     }
@@ -631,7 +631,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(task);
       mockRepository.Setup(s => s.ChangeOneAsync(taskId, It.IsAny<Change<Models.Task>>())).ReturnsAsync(task);
 
-      var result = await taskService.DeleteCommentAsync(taskId, commentId);
+      var result = await taskService.DeleteCommentAsync(mockUpdater.Object, taskId, commentId);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(task);
@@ -677,7 +677,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(task);
       mockRepository.Setup(s => s.ChangeOneAsync(taskId, It.IsAny<Change<Models.Task>>())).ReturnsAsync(expected);
 
-      var result = await taskService.DeleteCommentAsync(taskId, commentId);
+      var result = await taskService.DeleteCommentAsync(mockUpdater.Object, taskId, commentId);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);
@@ -713,9 +713,10 @@ namespace ServiceTests
         Data = new Models.Task { Title = "Zadanie testowe", },
         Updates = new List<string> { nameof(Models.Task.Title) }
       };
+      mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(task);
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(tasks);
 
-      var action = async () => await taskService.Patch(taskId, changes);
+      var action = async () => await taskService.PatchAsync(mockUpdater.Object, taskId, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage($"Istnieje już zadanie o nazwie {task.Title}.");
@@ -725,13 +726,25 @@ namespace ServiceTests
     public async Task Patch_Should_throw_exception_when_invalid_priority()
     {
       var taskId = Guid.Parse("00000000000000000000000000000001");
+      var task = new Models.Task
+      {
+        Id = taskId,
+        Title = "Zadanie testowe",
+        Description = "Opis zadania testowego",
+        Priority = 1,
+        Deadline = DateTime.Parse("2024-05-05"),
+        Status = TaskStatus.NotStarted,
+        SpentTime = 200,
+        CreatedAt = DateTime.Parse("2024-04-01"),
+      };
       var changes = new Change<Models.Task>
       {
         Data = new Models.Task { Priority = 8, },
         Updates = new List<string> { nameof(Models.Task.Priority) }
       };
+      mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(task);
 
-      var action = async () => await taskService.Patch(taskId, changes);
+      var action = async () => await taskService.PatchAsync(mockUpdater.Object, taskId, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Priorytet musi mieścić się w zakresie od 1 do 5.");
@@ -741,13 +754,25 @@ namespace ServiceTests
     public async Task Patch_Should_throw_exception_when_invalid_deadline()
     {
       var taskId = Guid.Parse("00000000000000000000000000000001");
+      var task = new Models.Task
+      {
+        Id = taskId,
+        Title = "Zadanie testowe",
+        Description = "Opis zadania testowego",
+        Priority = 1,
+        Deadline = DateTime.Parse("2024-05-05"),
+        Status = TaskStatus.NotStarted,
+        SpentTime = 200,
+        CreatedAt = DateTime.Parse("2024-04-01"),
+      };
       var changes = new Change<Models.Task>
       {
         Data = new Models.Task { Deadline = DateTime.Now.AddDays(-3), },
         Updates = new List<string> { nameof(Models.Task.Deadline) }
       };
+      mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(task);
 
-      var action = async () => await taskService.Patch(taskId, changes);
+      var action = async () => await taskService.PatchAsync(mockUpdater.Object, taskId, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Termin wykonania projektu już minął.");
@@ -762,9 +787,8 @@ namespace ServiceTests
         Data = new Models.Task { Priority = 2, },
         Updates = new List<string> { nameof(Models.Task.Priority) }
       };
-      mockRepository.Setup(s => s.ChangeOneAsync(taskId, It.IsAny<Change<Models.Task>>())).ReturnsAsync((Models.Task) null);
 
-      var result = await taskService.Patch(taskId, changes);
+      var result = await taskService.PatchAsync(mockUpdater.Object, taskId, changes);
 
       result.Should().BeNull();
     }
@@ -789,9 +813,10 @@ namespace ServiceTests
         Data = new Models.Task { Priority = 2, },
         Updates = new List<string> { nameof(Models.Task.Priority) }
       };
+      mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(expected);
       mockRepository.Setup(s => s.ChangeOneAsync(taskId, It.IsAny<Change<Models.Task>>())).ReturnsAsync(expected);
 
-      var result = await taskService.Patch(taskId, changes);
+      var result = await taskService.PatchAsync(mockUpdater.Object, taskId, changes);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);

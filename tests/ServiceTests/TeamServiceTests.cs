@@ -13,6 +13,7 @@ namespace ServiceTests
   {
     private Mock<ITeamRepository> mockRepository;
     private Mock<IUserService> mockUserService;
+    private Mock<IHistoryUpdater> mockUpdater;
     private ITeamService teamService;
 
     [SetUp]
@@ -20,6 +21,7 @@ namespace ServiceTests
     {
       mockRepository = new Mock<ITeamRepository>();
       mockUserService = new Mock<IUserService>();
+      mockUpdater = new Mock<IHistoryUpdater>();
       teamService = new TeamService(mockRepository.Object, mockUserService.Object);
     }
 
@@ -105,7 +107,7 @@ namespace ServiceTests
                       return team;
                     });
 
-      var result = await teamService.AddAsync(teamToAdd);
+      var result = await teamService.AddAsync(mockUpdater.Object, teamToAdd);
 
       result.Should().NotBeNull();
       result.Id.Should().Be("00000000000000000000000000000001");
@@ -135,7 +137,7 @@ namespace ServiceTests
                       return team;
                     });
 
-      var action = async () => await teamService.AddAsync(teamToAdd);
+      var action = async () => await teamService.AddAsync(mockUpdater.Object, teamToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage($"Istnieje już zespół o nazwie {teamToAdd.Name}.");
@@ -144,7 +146,7 @@ namespace ServiceTests
     [Test]
     public async Task AddAsync_Should_throw_exception_when_store_team_not_contains_name()
     {
-      var action = async () => await teamService.AddAsync(new Team());
+      var action = async () => await teamService.AddAsync(mockUpdater.Object, new Team());
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Nie podano nazwy zespołu.");
@@ -155,7 +157,7 @@ namespace ServiceTests
     {
       var teamId = Guid.Parse("00000000000000000000000000000001");
 
-      await teamService.DeleteAsync(teamId);
+      await teamService.DeleteAsync(mockUpdater.Object, teamId);
 
       mockRepository.Verify(s => s.RemoveAsync(teamId), Times.Once);
     }
@@ -195,7 +197,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(allTeams);
       mockRepository.Setup(s => s.ChangeOneAsync(teamId, It.IsAny<Change<Team>>())).ReturnsAsync(expected);
 
-      var result = await teamService.AddTeamLeader(teamId, userId);
+      var result = await teamService.AddTeamLeader(mockUpdater.Object, teamId, userId);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);
@@ -208,7 +210,7 @@ namespace ServiceTests
       var userId = Guid.Parse("00000000000000000000000000000002");
       mockRepository.Setup(s => s.GetByIdAsync(teamId)).ReturnsAsync((Team) null);
 
-      var result = await teamService.AddTeamLeader(teamId, userId);
+      var result = await teamService.AddTeamLeader(mockUpdater.Object, teamId, userId);
 
       result.Should().BeNull();
     }
@@ -226,7 +228,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetByIdAsync(teamId)).ReturnsAsync(team);
       mockUserService.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync((User) null);
 
-      var action = async () => await teamService.AddTeamLeader(teamId, userId);
+      var action = async () => await teamService.AddTeamLeader(mockUpdater.Object, teamId, userId);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage($"Nie znaleziono użytkownika o Id: {userId}.");
@@ -267,7 +269,7 @@ namespace ServiceTests
       mockUserService.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(user);
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(allTeams);
 
-      var action = async () => await teamService.AddTeamLeader(teamId1, userId);
+      var action = async () => await teamService.AddTeamLeader(mockUpdater.Object, teamId1, userId);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Użytkownik jest już przypisany do innego zespołu.");
@@ -308,7 +310,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(allTeams);
       mockRepository.Setup(s => s.ChangeOneAsync(teamId, It.IsAny<Change<Team>>())).ReturnsAsync(expected);
 
-      var result = await teamService.AddUserToTeam(teamId, userId);
+      var result = await teamService.AddUserToTeam(mockUpdater.Object, teamId, userId);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);
@@ -350,7 +352,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(allTeams);
       mockRepository.Setup(s => s.ChangeOneAsync(teamId, It.IsAny<Change<Team>>())).ReturnsAsync(expected);
 
-      var result = await teamService.AddUserToTeam(teamId, userId);
+      var result = await teamService.AddUserToTeam(mockUpdater.Object, teamId, userId);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);
@@ -363,7 +365,7 @@ namespace ServiceTests
       var userId = Guid.Parse("00000000000000000000000000000002");
       mockRepository.Setup(s => s.GetByIdAsync(teamId)).ReturnsAsync((Team) null);
 
-      var result = await teamService.AddUserToTeam(teamId, userId);
+      var result = await teamService.AddUserToTeam(mockUpdater.Object, teamId, userId);
 
       result.Should().BeNull();
     }
@@ -381,7 +383,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetByIdAsync(teamId)).ReturnsAsync(team);
       mockUserService.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync((User) null);
 
-      var action = async () => await teamService.AddUserToTeam(teamId, userId);
+      var action = async () => await teamService.AddUserToTeam(mockUpdater.Object, teamId, userId);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage($"Nie znaleziono użytkownika o Id: {userId}.");
@@ -422,7 +424,7 @@ namespace ServiceTests
       mockUserService.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(user);
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(allTeams);
 
-      var action = async () => await teamService.AddUserToTeam(teamId1, userId);
+      var action = async () => await teamService.AddUserToTeam(mockUpdater.Object, teamId1, userId);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage("Użytkownik jest już przypisany do innego zespołu.");
@@ -456,7 +458,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetByIdAsync(teamId)).ReturnsAsync(team);
       mockRepository.Setup(s => s.ChangeOneAsync(teamId, It.IsAny<Change<Team>>())).ReturnsAsync(expected);
 
-      var result = await teamService.DeleteUserFromTeam(teamId, userId);
+      var result = await teamService.DeleteUserFromTeam(mockUpdater.Object, teamId, userId);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);
@@ -489,7 +491,7 @@ namespace ServiceTests
       mockRepository.Setup(s => s.GetByIdAsync(teamId)).ReturnsAsync(team);
       mockRepository.Setup(s => s.ChangeOneAsync(teamId, It.IsAny<Change<Team>>())).ReturnsAsync(expected);
 
-      var result = await teamService.DeleteUserFromTeam(teamId, userId);
+      var result = await teamService.DeleteUserFromTeam(mockUpdater.Object, teamId, userId);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);
@@ -502,7 +504,7 @@ namespace ServiceTests
       var userId = Guid.Parse("00000000000000000000000000000002");
       mockRepository.Setup(s => s.GetByIdAsync(teamId)).ReturnsAsync((Team) null);
 
-      var result = await teamService.DeleteUserFromTeam(teamId, userId);
+      var result = await teamService.DeleteUserFromTeam(mockUpdater.Object, teamId, userId);
 
       result.Should().BeNull();
     }
@@ -511,21 +513,13 @@ namespace ServiceTests
     public async Task Patch_Should_return_null_when_team_is_not_exist()
     {
       var teamId = Guid.Parse("00000000000000000000000000000001");
-      var userId = Guid.Parse("00000000000000000000000000000002");
-      var allTeams = new PageableResult<Team>
-      {
-        Items = Array.Empty<Team>(),
-        Pagination = new Pagination { PageNumber = 0, PageSize = 50, TotalElements = 0 }
-      };
       var changes = new Change<Team>
       {
         Data = new Team { Name = "Java" },
         Updates = new List<string> { nameof(Team.Name) }
       };
-      mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(allTeams);
-      mockRepository.Setup(s => s.ChangeOneAsync(teamId, changes)).ReturnsAsync((Team) null);
 
-      var result = await teamService.Patch(teamId, changes);
+      var result = await teamService.PatchAsync(mockUpdater.Object, teamId, changes);
 
       result.Should().BeNull();
     }
@@ -555,9 +549,10 @@ namespace ServiceTests
         Data = new Team { Name = "Java" },
         Updates = new List<string> { nameof(Team.Name) }
       };
+      mockRepository.Setup(s => s.GetByIdAsync(teamId1)).ReturnsAsync(team1);
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(allTeams);
 
-      var action = async () => await teamService.Patch(teamId1, changes);
+      var action = async () => await teamService.PatchAsync(mockUpdater.Object, teamId1, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
       exception.WithMessage($"Istnieje już zespół o nazwie {team2.Name}.");
@@ -587,10 +582,11 @@ namespace ServiceTests
         Id = teamId,
         Name = "Java"
       };
+      mockRepository.Setup(s => s.GetByIdAsync(expected.Id)).ReturnsAsync(expected);
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(allTeams);
       mockRepository.Setup(s => s.ChangeOneAsync(teamId, changes)).ReturnsAsync(expected);
 
-      var result = await teamService.Patch(teamId, changes);
+      var result = await teamService.PatchAsync(mockUpdater.Object, teamId, changes);
 
       result.Should().NotBeNull();
       result.Should().BeEquivalentTo(expected);

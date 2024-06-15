@@ -1,5 +1,6 @@
 ﻿using Domain;
 using Models;
+using Models.Converts;
 using WebApi.Dtos;
 
 namespace WebApi.Converts
@@ -38,7 +39,6 @@ namespace WebApi.Converts
         Deadline = model.Deadline,
         Comments = model.Comments.Select(s => ConvertToCommentDto(s)),
         CreatedAt = model.CreatedAt,
-        Priority = model.Priority,
         Status = model.Status.Value.ToString(),
         Tasks = ConvertTaskIdsToTaskDtos(model.TaskIds),
         Title = model.Title,

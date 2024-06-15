@@ -2,6 +2,7 @@
 using Domain.Providers;
 using Models;
 using Models.Statueses;
+using Task = System.Threading.Tasks.Task;
 using TimeProvider = Domain.Providers.TimeProvider;
 
 namespace Domain.Services
@@ -21,7 +22,7 @@ namespace Domain.Services
     public async Task<PageableResult<Project>> GetAllAsync(PageableInput input)
       => await repository.GetAllAsync(input);
 
-    public async Task<Project> AddAsync(Project project)
+    public async Task<Project> AddAsync(IHistoryUpdater updater, Project project)
     {
       await ValidateStoreProject(project);
 
@@ -29,13 +30,22 @@ namespace Domain.Services
       project.Status = ProjectStatus.NotStarted;
       project.CreatedAt = TimeProvider.GetTime();
 
-      return await repository.StoreAsync(project);
+      var result = await repository.StoreAsync(project);
+
+      updater.SetObjectId<Project>(result.Id);
+      updater.SetChangeDetails(null, result);
+
+      return result;
     }
 
-    public async System.Threading.Tasks.Task DeleteAsync(Guid id)
-      => await repository.RemoveAsync(id);
+    public async Task DeleteAsync(IHistoryUpdater updater, Guid id)
+    {
+      updater.SetObjectId<Project>(id);
 
-    public async Task<Project> EndProjectAsync(Guid projectId)
+      await repository.RemoveAsync(id);
+    }
+
+    public async Task<Project> EndProjectAsync(IHistoryUpdater updater, Guid projectId)
     {
       var project = await repository.GetByIdAsync(projectId);
 
@@ -43,6 +53,7 @@ namespace Domain.Services
       {
         return null;
       }
+      var oldStatus = project.Status.Value;
 
       project.Status = ProjectStatus.Ended;
 
@@ -52,10 +63,15 @@ namespace Domain.Services
         Updates = new List<string> { nameof(project.Status) }
       };
 
-      return await Patch(projectId, changes);
+      var result = await Patch(projectId, changes);
+
+      updater.SetObjectId<Project>(result.Id);
+      updater.SetChangeDetailsStatus(oldStatus, result.Status.Value);
+
+      return result;
     }
 
-    public async Task<Project> AddCommentAsync(Guid projectId, Comment comment)
+    public async Task<Project> AddCommentAsync(IHistoryUpdater updater, Guid projectId, Comment comment)
     {
       var project = await repository.GetByIdAsync(projectId);
 
@@ -63,6 +79,17 @@ namespace Domain.Services
       {
         return null;
       }
+      var originalProject = new Project
+      {
+        Id = project.Id,
+        Title = project.Title,
+        Description = project.Description,
+        Deadline = project.Deadline,
+        Comments = project.Comments,
+        CreatedAt = project.CreatedAt,
+        Status = project.Status,
+        TaskIds = project.TaskIds,
+      };
 
       comment.Id = GuidProvider.GenetareGuid();
       comment.CreatedAt = TimeProvider.GetTime();
@@ -76,10 +103,15 @@ namespace Domain.Services
         Updates = new List<string> { nameof(project.Comments) }
       };
 
-      return await Patch(projectId, changes);
+      var result = await Patch(projectId, changes);
+
+      updater.SetObjectId<Project>(result.Id);
+      updater.SetChangeDetailsList(originalProject, result);
+
+      return result;
     }
 
-    public async Task<Project> DeleteCommentAsync(Guid projectId, Guid commentId)
+    public async Task<Project> DeleteCommentAsync(IHistoryUpdater updater, Guid projectId, Guid commentId)
     {
       var project = await repository.GetByIdAsync(projectId);
 
@@ -87,6 +119,18 @@ namespace Domain.Services
       {
         return null;
       }
+
+      var originalProject = new Project
+      {
+        Id = project.Id,
+        Title = project.Title,
+        Description = project.Description,
+        Deadline = project.Deadline,
+        Comments = project.Comments,
+        CreatedAt = project.CreatedAt,
+        Status = project.Status,
+        TaskIds = project.TaskIds,
+      };
 
       project.Comments = (project.Comments ?? new List<Comment>())
         .Where(s => s.Id != commentId)
@@ -99,10 +143,15 @@ namespace Domain.Services
         Updates = new List<string> { nameof(project.Comments) }
       };
 
-      return await Patch(projectId, changes);
+      var result = await Patch(projectId, changes);
+
+      updater.SetObjectId<Project>(result.Id);
+      updater.SetChangeDetailsList(originalProject, result);
+
+      return result;
     }
 
-    public async Task<Project> DeleteTaskAsync(Guid projectId, Guid taskId)
+    public async Task<Project> DeleteTaskAsync(IHistoryUpdater updater, Guid projectId, Guid taskId)
     {
       var project = await repository.GetByIdAsync(projectId);
 
@@ -110,6 +159,18 @@ namespace Domain.Services
       {
         return null;
       }
+
+      var originalProject = new Project
+      {
+        Id = project.Id,
+        Title = project.Title,
+        Description = project.Description,
+        Deadline = project.Deadline,
+        Comments = project.Comments,
+        CreatedAt = project.CreatedAt,
+        Status = project.Status,
+        TaskIds = project.TaskIds,
+      };
 
       project.TaskIds = (project.TaskIds ?? new List<Guid>())
         .Where(s => s != taskId)
@@ -122,18 +183,40 @@ namespace Domain.Services
         Updates = new List<string> { nameof(project.TaskIds) }
       };
 
-      return await Patch(projectId, changes);
+      var result = await Patch(projectId, changes);
+
+      updater.SetObjectId<Project>(result.Id);
+      updater.SetChangeDetailsList(originalProject, result);
+
+      return result;
     }
 
-    public async Task<Project> Patch(Guid id, Change<Project> project)
+    public async Task<Project> PatchAsync(IHistoryUpdater updater, Guid id, Change<Project> project)
+    {
+      var existingProject = await repository.GetByIdAsync(id);
+
+      if (existingProject == null)
+      {
+        return null;
+      }
+
+      var result = await Patch(id, project);
+
+      updater.SetObjectId<Project>(result.Id);
+      updater.SetChangeDetails(existingProject, result);
+
+      return result;
+    }
+
+
+    private async Task<Project> Patch(Guid id, Change<Project> project)
     {
       await ValidateChangeProject(project);
 
       return await repository.ChangeOneAsync(id, project);
     }
 
-
-    private async System.Threading.Tasks.Task ValidateStoreProject(Project project)
+    private async Task ValidateStoreProject(Project project)
     {
       if (project == null)
       {
@@ -147,11 +230,6 @@ namespace Domain.Services
       if (string.IsNullOrWhiteSpace(project?.Description))
       {
         throw new InvalidDataException("Pozycja 'Opis' jest wymagana.");
-      }
-
-      if (project.Priority > 5 || project.Priority < 0)
-      {
-        throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 0 do 5.");
       }
 
       if (project.Deadline < DateTime.Now)
@@ -168,9 +246,9 @@ namespace Domain.Services
       }
     }
 
-    private async System.Threading.Tasks.Task ValidateChangeProject(Change<Project> project)
+    private async Task ValidateChangeProject(Change<Project> project)
     {
-      if (project.Updates.Contains(nameof(Project.Title)))
+      if (project.Updates.Contains(nameof(Project.Title), StringComparer.InvariantCultureIgnoreCase))
       {
         var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
         var allProjects = await repository.GetAllAsync(input);
@@ -181,15 +259,7 @@ namespace Domain.Services
         }
       }
 
-      if (project.Updates.Contains(nameof(Project.Priority)))
-      {
-        if (project.Data.Priority > 5 || project.Data.Priority < 1)
-        {
-          throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5.");
-        }
-      }
-
-      if (project.Updates.Contains(nameof(Project.Deadline)))
+      if (project.Updates.Contains(nameof(Project.Deadline), StringComparer.InvariantCultureIgnoreCase))
       {
         if (project.Data.Deadline < DateTime.Now)
         {
