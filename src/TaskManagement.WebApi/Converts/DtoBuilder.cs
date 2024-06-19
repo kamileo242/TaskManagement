@@ -1,6 +1,7 @@
 ﻿using Domain;
 using Models;
 using Models.Converts;
+using TaskManagement.WebApi.Dtos;
 using WebApi.Dtos;
 
 namespace WebApi.Converts
@@ -9,11 +10,13 @@ namespace WebApi.Converts
   {
     private readonly ITaskService taskService;
     private readonly IUserService userService;
+    private readonly ITaskPriorityService taskPriorityService;
 
-    public DtoBuilder(ITaskService taskService, IUserService userService)
+    public DtoBuilder(ITaskService taskService, IUserService userService, ITaskPriorityService taskPriorityService)
     {
       this.taskService = taskService;
       this.userService = userService;
+      this.taskPriorityService = taskPriorityService;
     }
     public CommentDto ConvertToCommentDto(Comment model)
     {
@@ -52,7 +55,7 @@ namespace WebApi.Converts
         Deadline = model.Deadline,
         Comments = model.Comments.Select(s => ConvertToCommentDto(s)),
         CreatedAt = model.CreatedAt,
-        Priority = model.Priority,
+        Priority = ConvertToTaskPriorityDto(model.Priority),
         Status = model.Status.Value.ToString(),
         Title = model.Title,
         SpentTime = ConvertSpentTime(model.SpentTime),
@@ -205,5 +208,16 @@ namespace WebApi.Converts
         PageSize = model.PageSize,
         TotalElements = model.TotalElements,
       };
+
+    private TaskPriorityDto ConvertToTaskPriorityDto(string priorityId)
+    {
+      var taskPriority = taskPriorityService.GetPriority(priorityId);
+
+      return new()
+      {
+        Id = taskPriority.Id,
+        Name = taskPriority.Name,
+      };
+    }
   }
 }

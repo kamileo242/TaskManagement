@@ -21,9 +21,9 @@
     public string Description { get; set; }
 
     /// <summary>
-    /// Priorytet zadania w skali od 0 do 5,
+    /// Priorytet zadania,
     /// </summary>
-    public int Priority { get; set; }
+    public string Priority { get; set; }
 
     /// <summary>
     /// Termin wykonania zadania

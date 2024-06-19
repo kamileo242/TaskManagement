@@ -1,4 +1,5 @@
 ﻿using Swashbuckle.AspNetCore.Filters;
+using TaskManagement.WebApi.Dtos;
 using WebApi.Dtos;
 
 namespace WebApi.Examples
@@ -11,7 +12,7 @@ namespace WebApi.Examples
         Id = "d8e2d6d5a65e4ad09967bd8ae50c2eea",
         Title = "Implementacja historii zmian",
         Description = "Zaimplementowanie historii zmian zapisującej operacje wykonywane na wszytskich ewidencjach",
-        Priority = 1,
+        Priority = new TaskPriorityDto { Id = "normalny", Name = "Normalny" },
         Deadline = DateTime.Parse("2024-04-01"),
         Status = Models.Statueses.TaskStatus.NotStarted.Value,
         CreatedAt = DateTime.Parse("2024-02-19"),

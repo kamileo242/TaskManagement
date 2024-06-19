@@ -12,12 +12,18 @@ namespace Domain.Services
     private readonly ITaskRepository repository;
     private readonly IProjectService projectService;
     private readonly IUserService userService;
+    private readonly ITaskPriorityService taskPriorityService;
 
-    public TaskService(ITaskRepository repository, IProjectService projectService, IUserService userService)
+    public TaskService(
+      ITaskRepository repository,
+      IProjectService projectService,
+      IUserService userService,
+      ITaskPriorityService taskPriorityService)
     {
       this.repository = repository;
       this.projectService = projectService;
       this.userService = userService;
+      this.taskPriorityService = taskPriorityService;
     }
 
     public async Task<Models.Task> GetByIdAsync(Guid id)
@@ -31,9 +37,13 @@ namespace Domain.Services
 
     public async Task<Models.Task> AddAsync(IHistoryUpdater updater, Guid projectId, Models.Task task)
     {
-      await ValidateStoreTask(projectId, task);
       task.Id = GuidProvider.GenetareGuid();
+      if (string.IsNullOrEmpty(task.Priority))
+      {
+        task.Priority = taskPriorityService.DefaultPriority;
+      }
 
+      await ValidateStoreTask(projectId, task);
       ChangeProjectStatusAndAddTaskId(updater, projectId, task.Id);
 
       var result = await repository.StoreAsync(task);
@@ -293,15 +303,12 @@ namespace Domain.Services
         throw new InvalidDataException($"Istnieje już zadanie o nazwie {task.Title}.");
       }
 
-      if (task.Priority > 5 || task.Priority < 1)
-      {
-        throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5.");
-      }
-
       if (task.Deadline < DateTime.Now)
       {
         throw new InvalidDataException("Termin wykonania zadania już minął.");
       }
+
+      taskPriorityService.ValidatePriorityId(task.Priority);
 
       var project = await projectService.GetByIdAsync(projectId);
 
@@ -320,10 +327,7 @@ namespace Domain.Services
     {
       if (task.Updates.Contains(nameof(Models.Task.Priority), StringComparer.InvariantCultureIgnoreCase))
       {
-        if (task.Data.Priority > 5 || task.Data.Priority < 1)
-        {
-          throw new InvalidDataException("Priorytet musi mieścić się w zakresie od 1 do 5.");
-        }
+        taskPriorityService.ValidatePriorityId(task.Data.Priority);
       }
 
       if (task.Updates.Contains(nameof(Models.Task.Deadline), StringComparer.InvariantCultureIgnoreCase))

@@ -16,9 +16,9 @@
     public string? Description { get; init; }
 
     /// <summary>
-    /// Priorytet zadania w skali od 0 do 5,
+    /// Priorytet zadania,
     /// </summary>
-    public int? Priority { get; init; }
+    public string Priority { get; init; }
 
     /// <summary>
     /// Termin wykonania zadania

@@ -12,7 +12,7 @@ namespace WebApi.Examples
         {
           Title = "Implementacja historii zmian",
           Description = "Zaimplementowanie historii zmian zapisującej operacje wykonywane na wszytskich ewidencjach",
-          Priority = 1,
+          Priority = "wysoki",
           Deadline = DateTime.Parse("2024-04-01"),
         }
       };

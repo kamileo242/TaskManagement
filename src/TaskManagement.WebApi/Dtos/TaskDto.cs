@@ -1,4 +1,6 @@
-﻿namespace WebApi.Dtos
+﻿using TaskManagement.WebApi.Dtos;
+
+namespace WebApi.Dtos
 {
   /// <summary>
   /// Obiekt dto zadania
@@ -21,9 +23,9 @@
     public string Description { get; init; }
 
     /// <summary>
-    /// Priorytet zadania w skali od 0 do 5,
+    /// Priorytet zadania,
     /// </summary>
-    public int Priority { get; init; }
+    public TaskPriorityDto Priority { get; init; }
 
     /// <summary>
     /// Termin wykonania zadania
