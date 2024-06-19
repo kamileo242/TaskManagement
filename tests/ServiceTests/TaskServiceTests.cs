@@ -17,6 +17,7 @@ namespace ServiceTests
     private Mock<IProjectService> mockProjectService;
     private Mock<IUserService> mockUserService;
     private Mock<IHistoryUpdater> mockUpdater;
+    private Mock<ITaskPriorityService> mockTaskPriorityService;
     private ITaskService taskService;
 
     [SetUp]
@@ -26,7 +27,13 @@ namespace ServiceTests
       mockProjectService = new Mock<IProjectService>();
       mockUserService = new Mock<IUserService>();
       mockUpdater = new Mock<IHistoryUpdater>();
-      taskService = new TaskService(mockRepository.Object, mockProjectService.Object, mockUserService.Object);
+      mockTaskPriorityService = new Mock<ITaskPriorityService>();
+
+      taskService = new TaskService(
+        mockRepository.Object,
+        mockProjectService.Object,
+        mockUserService.Object,
+        mockTaskPriorityService.Object);
     }
 
     [Test]
@@ -37,7 +44,7 @@ namespace ServiceTests
         Id = Guid.Parse("00000000000000000000000000000001"),
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "normalny",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -79,7 +86,7 @@ namespace ServiceTests
             Id = Guid.Parse("00000000000000000000000000000001"),
             Title = "Zadanie testowe",
             Description = "Opis zadania testowego",
-            Priority = 1,
+            Priority = "normalny",
             Deadline = DateTime.Parse("2024-05-05"),
             Status = TaskStatus.NotStarted,
             CreatedAt = DateTime.Parse("2024-04-01"),
@@ -121,7 +128,7 @@ namespace ServiceTests
         Title = "Zadanie testowy",
         Description = "Opis zadania testowego",
         Deadline = DateTime.Now.AddDays(3),
-        Priority = 1,
+        Priority = "wysoki",
       };
       var project = new Project
       {
@@ -164,7 +171,7 @@ namespace ServiceTests
       {
         Description = "Opis zadania testowego",
         Deadline = DateTime.Now.AddDays(3),
-        Priority = 1,
+        Priority = "wysoki",
       };
 
       var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
@@ -187,7 +194,7 @@ namespace ServiceTests
             Id = taskId,
             Title = "Zadanie testowe",
             Description = "Opis zadania testowego",
-            Priority = 1,
+            Priority = "wysoki",
             Deadline = DateTime.Parse("2024-05-05"),
             Status = TaskStatus.NotStarted,
             CreatedAt = DateTime.Parse("2024-04-01"),
@@ -205,7 +212,7 @@ namespace ServiceTests
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
         Deadline = DateTime.Now.AddDays(3),
-        Priority = 1,
+        Priority = "wysoki",
       };
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(tasks);
 
@@ -235,14 +242,23 @@ namespace ServiceTests
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
         Deadline = DateTime.Now.AddDays(3),
-        Priority = 8,
+        Priority = "invalid",
       };
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(tasks);
+      mockTaskPriorityService
+          .Setup(s => s.ValidatePriorityId(It.IsAny<string>()))
+          .Callback<string>(priority =>
+          {
+            if (priority == "invalid")
+            {
+              throw new InvalidDataException($"Nieprawidłowy identyfikator priorytetu: {priority}");
+            }
+          });
 
       var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Priorytet musi mieścić się w zakresie od 1 do 5.");
+      exception.WithMessage($"Nieprawidłowy identyfikator priorytetu: {taskToAdd.Priority}");
     }
 
     [Test]
@@ -265,7 +281,7 @@ namespace ServiceTests
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
         Deadline = DateTime.Now.AddDays(-3),
-        Priority = 1,
+        Priority = "wysoki",
       };
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(tasks);
 
@@ -295,7 +311,7 @@ namespace ServiceTests
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
         Deadline = DateTime.Now.AddDays(3),
-        Priority = 1,
+        Priority = "wysoki",
       };
       mockRepository.Setup(s => s.GetAllAsync(It.IsAny<PageableInput>())).ReturnsAsync(tasks);
       mockProjectService.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync((Project) null);
@@ -326,7 +342,7 @@ namespace ServiceTests
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
         Deadline = DateTime.Now.AddDays(3),
-        Priority = 1,
+        Priority = "wysoki",
       };
       var project = new Project
       {
@@ -364,7 +380,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -375,7 +391,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.Started,
         SpentTime = 320,
@@ -411,7 +427,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -431,7 +447,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -470,7 +486,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -494,7 +510,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -505,7 +521,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.Ended,
         SpentTime = 200,
@@ -540,7 +556,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -551,7 +567,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.Ended,
         SpentTime = 200,
@@ -622,7 +638,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -647,7 +663,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -668,7 +684,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -692,7 +708,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -731,7 +747,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -739,15 +755,23 @@ namespace ServiceTests
       };
       var changes = new Change<Models.Task>
       {
-        Data = new Models.Task { Priority = 8, },
+        Data = new Models.Task { Priority = "invalid", },
         Updates = new List<string> { nameof(Models.Task.Priority) }
       };
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(task);
-
+      mockTaskPriorityService
+        .Setup(s => s.ValidatePriorityId(It.IsAny<string>()))
+        .Callback<string>(priority =>
+        {
+          if (priority == "invalid")
+          {
+            throw new InvalidDataException($"Nieprawidłowy identyfikator priorytetu: {priority}");
+          }
+        });
       var action = async () => await taskService.PatchAsync(mockUpdater.Object, taskId, changes);
 
       var exception = await action.Should().ThrowAsync<InvalidDataException>();
-      exception.WithMessage("Priorytet musi mieścić się w zakresie od 1 do 5.");
+      exception.WithMessage($"Nieprawidłowy identyfikator priorytetu: invalid");
     }
 
     [Test]
@@ -759,7 +783,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 1,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -784,7 +808,7 @@ namespace ServiceTests
       var taskId = Guid.Parse("00000000000000000000000000000001");
       var changes = new Change<Models.Task>
       {
-        Data = new Models.Task { Priority = 2, },
+        Data = new Models.Task { Priority = "wysoki", },
         Updates = new List<string> { nameof(Models.Task.Priority) }
       };
 
@@ -802,7 +826,7 @@ namespace ServiceTests
         Id = taskId,
         Title = "Zadanie testowe",
         Description = "Opis zadania testowego",
-        Priority = 2,
+        Priority = "wysoki",
         Deadline = DateTime.Parse("2024-05-05"),
         Status = TaskStatus.NotStarted,
         SpentTime = 200,
@@ -810,7 +834,7 @@ namespace ServiceTests
       };
       var changes = new Change<Models.Task>
       {
-        Data = new Models.Task { Priority = 2, },
+        Data = new Models.Task { Priority = "wysoki", },
         Updates = new List<string> { nameof(Models.Task.Priority) }
       };
       mockRepository.Setup(s => s.GetByIdAsync(taskId)).ReturnsAsync(expected);
