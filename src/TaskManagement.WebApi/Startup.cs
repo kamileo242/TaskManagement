@@ -12,14 +12,19 @@ namespace WebApi
   public class Startup
   {
     private readonly IWebHostEnvironment env;
+    public IConfiguration Configuration { get; }
 
-    public Startup(IWebHostEnvironment env)
+    public Startup(IWebHostEnvironment env, IConfiguration configuration)
     {
       this.env = env;
+      Configuration = configuration;
     }
 
     public void ConfigureServices(IServiceCollection services)
     {
+      Console.WriteLine($"Environment: {env.EnvironmentName}");
+      Console.WriteLine($"Database Name: {Configuration.GetSection("Database:DatabaseName").Value}");
+
       services.Configure<RequestLocalizationOptions>(o =>
       {
         o.DefaultRequestCulture = new RequestCulture("pl-PL");

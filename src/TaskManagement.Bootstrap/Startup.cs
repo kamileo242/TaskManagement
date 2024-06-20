@@ -22,9 +22,13 @@ namespace Bootstrap
             builder.RegisterAssemblyModules(Assembly.GetExecutingAssembly());
             builder.RegisterInstance(context.Configuration.GetSection(DatabaseSetup.SectionName).Get<DatabaseSetup>());
           })
-          .ConfigureAppConfiguration(builder =>
+          .ConfigureAppConfiguration((context, builder) =>
           {
-            builder.AddJsonFile("appsettings.json", optional: false);
+            var env = context.HostingEnvironment;
+
+            builder.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: false, reloadOnChange: true);
+
+            builder.AddEnvironmentVariables();
           })
           .ConfigureWebHostDefaults(webBuilder =>
           {

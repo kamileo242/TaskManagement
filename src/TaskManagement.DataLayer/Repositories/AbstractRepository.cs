@@ -21,11 +21,12 @@ namespace DataLayer.Repositories
 
     public AbstractRepository(DatabaseSetup setup, IDboConverter converter, string collectionName)
     {
+      BsonDefaults.GuidRepresentation = GuidRepresentation.Standard;
       this.converter = converter;
       var client = new MongoClient(setup.ConnectionString);
       var database = client.GetDatabase(setup.DatabaseName);
       collection = database.GetCollection<TDbo>(collectionName);
-      BsonDefaults.GuidRepresentation = GuidRepresentation.Standard;
+
     }
 
     public async Task<TEntity> GetByIdAsync(TId id)
