@@ -2,6 +2,7 @@
 using Domain.Providers;
 using Models;
 using Models.Statueses;
+using TaskManagement.Models.Exceptions;
 using Task = System.Threading.Tasks.Task;
 using TimeProvider = Domain.Providers.TimeProvider;
 
@@ -17,7 +18,17 @@ namespace Domain.Services
     }
 
     public async Task<Project> GetByIdAsync(Guid id)
-    => await repository.GetByIdAsync(id);
+    {
+      var project = await repository.GetByIdAsync(id);
+
+      if (project == null)
+      {
+        throw new MissingDataException($"Nie znaleziono projektu o id: {id}.");
+      }
+
+      return project;
+    }
+
 
     public async Task<PageableResult<Project>> GetAllAsync(PageableInput input)
       => await repository.GetAllAsync(input);
@@ -51,7 +62,7 @@ namespace Domain.Services
 
       if (project == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono projektu o id: {projectId}.");
       }
       var oldStatus = project.Status.Value;
 
@@ -77,7 +88,7 @@ namespace Domain.Services
 
       if (project == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono projektu o id: {projectId}.");
       }
       var originalProject = new Project
       {
@@ -117,7 +128,7 @@ namespace Domain.Services
 
       if (project == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono projektu o id: {projectId}.");
       }
 
       var originalProject = new Project
@@ -157,7 +168,7 @@ namespace Domain.Services
 
       if (project == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono projektu o id: {projectId}.");
       }
 
       var originalProject = new Project
@@ -197,7 +208,7 @@ namespace Domain.Services
 
       if (existingProject == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono projektu o id: {id}.");
       }
 
       var result = await Patch(id, project);
@@ -220,21 +231,21 @@ namespace Domain.Services
     {
       if (project == null)
       {
-        throw new InvalidDataException("Nie podano żadnych danych.");
+        throw new IncorrectDataException("Nie podano żadnych danych.");
       }
       if (string.IsNullOrWhiteSpace(project.Title))
       {
-        throw new InvalidDataException("Pozycja 'Tytuł' jest wymagana.");
+        throw new IncorrectDataException("Pozycja 'Tytuł' jest wymagana.");
       }
 
       if (string.IsNullOrWhiteSpace(project?.Description))
       {
-        throw new InvalidDataException("Pozycja 'Opis' jest wymagana.");
+        throw new IncorrectDataException("Pozycja 'Opis' jest wymagana.");
       }
 
       if (project.Deadline < DateTime.Now)
       {
-        throw new InvalidDataException("Termin wykonania projektu już minął.");
+        throw new IncorrectDataException("Termin wykonania projektu już minął.");
       }
 
       var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
@@ -242,7 +253,7 @@ namespace Domain.Services
 
       if (allProjects.Items.Any(s => s.Title == project.Title))
       {
-        throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Title}.");
+        throw new IncorrectDataException($"Istnieje już projekt o nazwie {project.Title}.");
       }
     }
 
@@ -255,7 +266,7 @@ namespace Domain.Services
 
         if (allProjects.Items.Any(s => s.Title == project.Data.Title))
         {
-          throw new InvalidDataException($"Istnieje już projekt o nazwie {project.Data.Title}.");
+          throw new IncorrectDataException($"Istnieje już projekt o nazwie {project.Data.Title}.");
         }
       }
 
@@ -263,7 +274,7 @@ namespace Domain.Services
       {
         if (project.Data.Deadline < DateTime.Now)
         {
-          throw new InvalidDataException("Termin wykonania projektu już minął.");
+          throw new IncorrectDataException("Termin wykonania projektu już minął.");
         }
       }
     }

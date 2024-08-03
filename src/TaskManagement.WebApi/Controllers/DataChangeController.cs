@@ -47,9 +47,7 @@ namespace WebApi.Controllers
     {
       var result = await dataChangeService.GetByIdAsync(id.TextToGuid());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToDataChangeDto(result));
+      return Ok(dtoBuilder.ConvertToDataChangeDto(result));
     }
 
     /// <summary>

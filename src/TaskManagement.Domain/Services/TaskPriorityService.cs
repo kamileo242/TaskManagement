@@ -1,4 +1,5 @@
 ﻿using TaskManagement.Models;
+using TaskManagement.Models.Exceptions;
 
 namespace Domain.Services
 {
@@ -40,7 +41,7 @@ namespace Domain.Services
     {
       if (!string.IsNullOrEmpty(priorityId) && !priorityById.ContainsKey(priorityId))
       {
-        throw new InvalidDataException($"Nieprawidłowy identyfikator priorytetu: {priorityId}");
+        throw new IncorrectDataException($"Nieprawidłowy identyfikator priorytetu: {priorityId}");
       }
     }
   }

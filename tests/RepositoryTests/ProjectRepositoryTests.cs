@@ -264,7 +264,6 @@ namespace RepositoryTests
         Status = ProjectStatus.NotStarted,
         CreatedAt = DateTime.Parse("2024-05-01"),
         Comments = new List<Comment>() { }
-
       };
       await DatabaseHelper.AddElementToCollection(collection, project);
 

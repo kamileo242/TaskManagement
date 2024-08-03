@@ -5,6 +5,7 @@ using FluentAssertions;
 using Models;
 using Models.Statueses;
 using Moq;
+using TaskManagement.Models.Exceptions;
 using Task = System.Threading.Tasks.Task;
 using TaskStatus = Models.Statueses.TaskStatus;
 
@@ -176,7 +177,7 @@ namespace ServiceTests
 
       var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Pozycja 'Tytuł' jest wymagana.");
     }
 
@@ -218,7 +219,7 @@ namespace ServiceTests
 
       var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Istnieje już zadanie o nazwie {taskToAdd.Title}.");
     }
 
@@ -251,13 +252,13 @@ namespace ServiceTests
           {
             if (priority == "invalid")
             {
-              throw new InvalidDataException($"Nieprawidłowy identyfikator priorytetu: {priority}");
+              throw new IncorrectDataException($"Nieprawidłowy identyfikator priorytetu: {priority}");
             }
           });
 
       var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Nieprawidłowy identyfikator priorytetu: {taskToAdd.Priority}");
     }
 
@@ -287,7 +288,7 @@ namespace ServiceTests
 
       var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Termin wykonania zadania już minął.");
     }
 
@@ -318,7 +319,7 @@ namespace ServiceTests
 
       var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Nie znlaziono projektu o identyfikatorze {projectId}.");
     }
 
@@ -357,7 +358,7 @@ namespace ServiceTests
 
       var action = async () => await taskService.AddAsync(mockUpdater.Object, projectId, taskToAdd);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Nie można dodać zadania do zakończonego projektu.");
     }
 
@@ -497,7 +498,7 @@ namespace ServiceTests
 
       var action = async () => await taskService.AssignPersonToTaskAsync(mockUpdater.Object, taskId, userId);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Nie znaleziono użytkownika o Id: {userId}.");
     }
 
@@ -734,7 +735,7 @@ namespace ServiceTests
 
       var action = async () => await taskService.PatchAsync(mockUpdater.Object, taskId, changes);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Istnieje już zadanie o nazwie {task.Title}.");
     }
 
@@ -765,12 +766,12 @@ namespace ServiceTests
         {
           if (priority == "invalid")
           {
-            throw new InvalidDataException($"Nieprawidłowy identyfikator priorytetu: {priority}");
+            throw new IncorrectDataException($"Nieprawidłowy identyfikator priorytetu: {priority}");
           }
         });
       var action = async () => await taskService.PatchAsync(mockUpdater.Object, taskId, changes);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Nieprawidłowy identyfikator priorytetu: invalid");
     }
 
@@ -798,7 +799,7 @@ namespace ServiceTests
 
       var action = async () => await taskService.PatchAsync(mockUpdater.Object, taskId, changes);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Termin wykonania projektu już minął.");
     }
 

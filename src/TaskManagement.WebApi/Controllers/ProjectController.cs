@@ -55,9 +55,7 @@ namespace WebApi.Controllers
     {
       var result = await projectService.GetByIdAsync(id.TextToGuid());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToProjectDto(result));
+      return Ok(dtoBuilder.ConvertToProjectDto(result));
     }
 
     /// <summary>
@@ -137,9 +135,7 @@ namespace WebApi.Controllers
 
       var result = await projectService.EndProjectAsync(context, projectId.TextToGuid());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToProjectDto(result));
+      return Ok(dtoBuilder.ConvertToProjectDto(result));
     }
 
     /// <summary>
@@ -160,9 +156,7 @@ namespace WebApi.Controllers
 
       var result = await projectService.AddCommentAsync(context, id.TextToGuid(), commentDto.ToModel());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToProjectDto(result));
+      return Ok(dtoBuilder.ConvertToProjectDto(result));
     }
 
     /// <summary>
@@ -183,9 +177,7 @@ namespace WebApi.Controllers
 
       var result = await projectService.DeleteCommentAsync(context, projectId.TextToGuid(), commentId.TextToGuid());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToProjectDto(result));
+      return Ok(dtoBuilder.ConvertToProjectDto(result));
     }
 
     /// <summary>
@@ -206,9 +198,7 @@ namespace WebApi.Controllers
 
       var result = await projectService.DeleteTaskAsync(context, projectId.TextToGuid(), taskId.TextToGuid());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToProjectDto(result));
+      return Ok(dtoBuilder.ConvertToProjectDto(result));
     }
 
     /// <summary>
@@ -228,9 +218,7 @@ namespace WebApi.Controllers
 
       var result = await projectService.PatchAsync(context, id.TextToGuid(), changeProject.ToModel());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToProjectDto(result));
+      return Ok(dtoBuilder.ConvertToProjectDto(result));
     }
   }
 }

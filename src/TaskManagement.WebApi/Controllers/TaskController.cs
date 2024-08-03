@@ -55,9 +55,7 @@ namespace WebApi.Controllers
     {
       var result = await taskService.GetByIdAsync(id.TextToGuid());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToTaskDto(result));
+      return Ok(dtoBuilder.ConvertToTaskDto(result));
     }
 
     /// <summary>
@@ -138,9 +136,7 @@ namespace WebApi.Controllers
 
       var result = await taskService.EndTaskStatusAsync(context, projectId.TextToGuid());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToTaskDto(result));
+      return Ok(dtoBuilder.ConvertToTaskDto(result));
     }
 
     /// <summary>
@@ -161,9 +157,7 @@ namespace WebApi.Controllers
 
       var result = await taskService.AddCommentAsync(context, id.TextToGuid(), commentDto.ToModel());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToTaskDto(result));
+      return Ok(dtoBuilder.ConvertToTaskDto(result));
     }
 
     /// <summary>
@@ -184,9 +178,7 @@ namespace WebApi.Controllers
 
       var result = await taskService.DeleteCommentAsync(context, taskId.TextToGuid(), commentId.TextToGuid());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToTaskDto(result));
+      return Ok(dtoBuilder.ConvertToTaskDto(result));
     }
 
     /// <summary>
@@ -207,9 +199,7 @@ namespace WebApi.Controllers
 
       var result = await taskService.AssignPersonToTaskAsync(context, projectId.TextToGuid(), userId.TextToGuid());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToTaskDto(result));
+      return Ok(dtoBuilder.ConvertToTaskDto(result));
     }
 
     /// <summary>
@@ -230,9 +220,7 @@ namespace WebApi.Controllers
 
       var result = await taskService.RegisterTimeAsync(context, projectId.TextToGuid(), timeInMinutes);
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToTaskDto(result));
+      return Ok(dtoBuilder.ConvertToTaskDto(result));
     }
 
     /// <summary>
@@ -252,9 +240,7 @@ namespace WebApi.Controllers
 
       var result = await taskService.PatchAsync(context, id.TextToGuid(), changeTask.ToModel());
 
-      return result == null
-      ? NotFound()
-      : Ok(dtoBuilder.ConvertToTaskDto(result));
+      return Ok(dtoBuilder.ConvertToTaskDto(result));
     }
   }
 }

@@ -5,6 +5,7 @@ using FluentAssertions;
 using Models;
 using Models.Statueses;
 using Moq;
+using TaskManagement.Models.Exceptions;
 using Task = System.Threading.Tasks.Task;
 
 namespace ServiceTests
@@ -49,9 +50,10 @@ namespace ServiceTests
       var projectId = Guid.Parse("00000000000000000000000000000001");
       mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync((Project) null);
 
-      var result = await projectService.GetByIdAsync(projectId);
+      var action = async () => await projectService.GetByIdAsync(projectId);
 
-      result.Should().BeNull();
+      var exception = await action.Should().ThrowAsync<MissingDataException>();
+      exception.WithMessage($"Nie znaleziono projektu o id: {projectId}.");
     }
 
     [Test]
@@ -144,7 +146,7 @@ namespace ServiceTests
 
       var action = async () => await projectService.AddAsync(mockUpdater.Object, projectToAdd);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Pozycja 'Tytuł' jest wymagana.");
     }
 
@@ -159,7 +161,7 @@ namespace ServiceTests
 
       var action = async () => await projectService.AddAsync(mockUpdater.Object, projectToAdd);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Pozycja 'Opis' jest wymagana.");
     }
 
@@ -175,7 +177,7 @@ namespace ServiceTests
 
       var action = async () => await projectService.AddAsync(mockUpdater.Object, projectToAdd);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Termin wykonania projektu już minął.");
     }
 
@@ -215,7 +217,7 @@ namespace ServiceTests
 
       var action = async () => await projectService.AddAsync(mockUpdater.Object, projectToAdd);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Istnieje już projekt o nazwie {projectToAdd.Title}.");
     }
 
@@ -259,9 +261,10 @@ namespace ServiceTests
 
       mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync((Project) null);
 
-      var result = await projectService.EndProjectAsync(mockUpdater.Object, projectId);
+      var action = async () => await projectService.EndProjectAsync(mockUpdater.Object, projectId);
 
-      result.Should().BeNull();
+      var exception = await action.Should().ThrowAsync<MissingDataException>();
+      exception.WithMessage($"Nie znaleziono projektu o id: {projectId}.");
     }
 
     [Test]
@@ -275,9 +278,10 @@ namespace ServiceTests
       };
       mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync((Project) null);
 
-      var result = await projectService.AddCommentAsync(mockUpdater.Object, projectId, newComment);
+      var action = async () => await projectService.AddCommentAsync(mockUpdater.Object, projectId, newComment);
 
-      result.Should().BeNull();
+      var exception = await action.Should().ThrowAsync<MissingDataException>();
+      exception.WithMessage($"Nie znaleziono projektu o id: {projectId}.");
     }
 
     [Test]
@@ -322,9 +326,10 @@ namespace ServiceTests
       var commentId = Guid.Parse("00000000000000000000000000000002");
       mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync((Project) null);
 
-      var result = await projectService.DeleteCommentAsync(mockUpdater.Object, projectId, commentId);
+      var action = async () => await projectService.DeleteCommentAsync(mockUpdater.Object, projectId, commentId);
 
-      result.Should().BeNull();
+      var exception = await action.Should().ThrowAsync<MissingDataException>();
+      exception.WithMessage($"Nie znaleziono projektu o id: {projectId}.");
     }
 
     [Test]
@@ -399,9 +404,10 @@ namespace ServiceTests
       var taskId = Guid.Parse("00000000000000000000000000000002");
       mockRepository.Setup(s => s.GetByIdAsync(projectId)).ReturnsAsync((Project) null);
 
-      var result = await projectService.DeleteTaskAsync(mockUpdater.Object, projectId, taskId);
+      var action = async () => await projectService.DeleteTaskAsync(mockUpdater.Object, projectId, taskId);
 
-      result.Should().BeNull();
+      var exception = await action.Should().ThrowAsync<MissingDataException>();
+      exception.WithMessage($"Nie znaleziono projektu o id: {projectId}.");
     }
 
     [Test]
@@ -493,7 +499,7 @@ namespace ServiceTests
 
       var action = async () => await projectService.PatchAsync(mockUpdater.Object, projectId, changes);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Istnieje już projekt o nazwie {project.Title}.");
     }
 
@@ -530,7 +536,7 @@ namespace ServiceTests
 
       var action = async () => await projectService.PatchAsync(mockUpdater.Object, projectId, changes);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Termin wykonania projektu już minął.");
     }
 
@@ -544,9 +550,10 @@ namespace ServiceTests
         Updates = new List<string> { nameof(Project.Description) }
       };
 
-      var result = await projectService.PatchAsync(mockUpdater.Object, projectId, changes);
+      var action = async () => await projectService.PatchAsync(mockUpdater.Object, projectId, changes);
 
-      result.Should().BeNull();
+      var exception = await action.Should().ThrowAsync<MissingDataException>();
+      exception.WithMessage($"Nie znaleziono projektu o id: {projectId}.");
     }
 
     [Test]

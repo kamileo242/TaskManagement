@@ -22,9 +22,6 @@ namespace WebApi
 
     public void ConfigureServices(IServiceCollection services)
     {
-      Console.WriteLine($"Environment: {env.EnvironmentName}");
-      Console.WriteLine($"Database Name: {Configuration.GetSection("Database:DatabaseName").Value}");
-
       services.Configure<RequestLocalizationOptions>(o =>
       {
         o.DefaultRequestCulture = new RequestCulture("pl-PL");
