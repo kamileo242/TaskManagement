@@ -27,7 +27,7 @@ namespace WebApi.Controllers
     public IActionResult ErrorInDevelopmentEnvironment()
       => GetResponse(isDevelopment: true);
 
-    private ObjectResult GetResponse(bool isDevelopment)
+    private IActionResult GetResponse(bool isDevelopment)
     {
       var context = HttpContext.Features.Get<IExceptionHandlerFeature>();
       var exception = context.Error;

@@ -6,6 +6,7 @@ using FluentAssertions;
 using Models;
 using Models.Statueses;
 using Mongo2Go;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Task = System.Threading.Tasks.Task;
 
@@ -24,15 +25,19 @@ namespace RepositoryTests
     [SetUp]
     public void SetUp()
     {
+      BsonDefaults.GuidRepresentation = GuidRepresentation.Standard;
+
       runner = MongoDbRunner.Start();
       client = new MongoClient(runner.ConnectionString);
-      database = client.GetDatabase("TestDatabase");
-      var setup = new DatabaseSetup { ConnectionString = runner.ConnectionString, DatabaseName = "TestDatabase" };
+      database = client.GetDatabase("TaskManagement");
+      var setup = new DatabaseSetup { ConnectionString = runner.ConnectionString, DatabaseName = "TaskManagement" };
 
       dboConverter = new DboConverter();
       repository = new ProjectRepository(setup, dboConverter);
 
       collection = database.GetCollection<ProjectDbo>("projects");
+
+      collection.DeleteMany(FilterDefinition<ProjectDbo>.Empty);
     }
 
     [TearDown]

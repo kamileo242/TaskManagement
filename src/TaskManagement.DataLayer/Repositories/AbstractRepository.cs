@@ -26,7 +26,6 @@ namespace DataLayer.Repositories
       var client = new MongoClient(setup.ConnectionString);
       var database = client.GetDatabase(setup.DatabaseName);
       collection = database.GetCollection<TDbo>(collectionName);
-
     }
 
     public async Task<TEntity> GetByIdAsync(TId id)

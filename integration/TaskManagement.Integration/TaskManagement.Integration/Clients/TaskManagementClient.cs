@@ -22,8 +22,8 @@ namespace TaskManagement.Integration
     using System = global::System;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.0.8.0 (NJsonSchema v11.0.1.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class TaskManagementClient
-  {
+    public partial class TaskManagementClient 
+    {
         #pragma warning disable 8618
         private string _baseUrl;
         #pragma warning restore 8618
