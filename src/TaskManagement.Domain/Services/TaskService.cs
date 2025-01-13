@@ -2,6 +2,7 @@
 using Domain.Providers;
 using Models;
 using Models.Statueses;
+using TaskManagement.Models.Exceptions;
 using TaskStatus = Models.Statueses.TaskStatus;
 using TimeProvider = Domain.Providers.TimeProvider;
 
@@ -27,7 +28,17 @@ namespace Domain.Services
     }
 
     public async Task<Models.Task> GetByIdAsync(Guid id)
-    => await repository.GetByIdAsync(id);
+    {
+      var task = await GetByIdAsync(id);
+
+      if (task == null)
+      {
+        throw new MissingDataException($"Nie znaleziono zadania o id: {id}.");
+      }
+
+      return task;
+    }
+
 
     public Models.Task GetById(Guid id)
     => repository.GetByIdAsync(id).GetAwaiter().GetResult();
@@ -67,7 +78,7 @@ namespace Domain.Services
 
       if (task == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono zadania o id: {taskId}.");
       }
 
       var originalTask = new Models.Task
@@ -107,7 +118,7 @@ namespace Domain.Services
 
       if (task == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono zadania o id: {taskId}.");
       }
 
       var originalTask = new Models.Task
@@ -128,7 +139,7 @@ namespace Domain.Services
 
       if (exisitng == null)
       {
-        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}.");
+        throw new MissingDataException($"Nie znaleziono użytkownika o id: {userId}.");
       }
 
       task.AssignedPersonId = userId;
@@ -153,7 +164,7 @@ namespace Domain.Services
 
       if (task == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono zadania o id: {taskId}.");
       }
 
       var oldStatus = task.Status.Value;
@@ -179,7 +190,7 @@ namespace Domain.Services
 
       if (task == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono zadania o id: {taskId}.");
       }
 
       var originalTask = new Models.Task
@@ -222,7 +233,7 @@ namespace Domain.Services
 
       if (task == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono zadania o id: {taskId}.");
       }
 
       var originalTask = new Models.Task
@@ -264,7 +275,7 @@ namespace Domain.Services
 
       if (existingTask == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono zadania o id: {id}.");
       }
 
       var result = await Patch(id, task);
@@ -287,12 +298,12 @@ namespace Domain.Services
     {
       if (task == null)
       {
-        throw new InvalidDataException("Nie podano żadnych danych.");
+        throw new IncorrectDataException("Nie podano żadnych danych.");
       }
 
       if (string.IsNullOrWhiteSpace(task.Title))
       {
-        throw new InvalidDataException("Pozycja 'Tytuł' jest wymagana.");
+        throw new IncorrectDataException("Pozycja 'Tytuł' jest wymagana.");
       }
 
       var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
@@ -300,12 +311,12 @@ namespace Domain.Services
 
       if (allTasks.Items.Any(s => s.Title == task.Title))
       {
-        throw new InvalidDataException($"Istnieje już zadanie o nazwie {task.Title}.");
+        throw new IncorrectDataException($"Istnieje już zadanie o nazwie {task.Title}.");
       }
 
       if (task.Deadline < DateTime.Now)
       {
-        throw new InvalidDataException("Termin wykonania zadania już minął.");
+        throw new IncorrectDataException("Termin wykonania zadania już minął.");
       }
 
       taskPriorityService.ValidatePriorityId(task.Priority);
@@ -314,12 +325,12 @@ namespace Domain.Services
 
       if (project == null)
       {
-        throw new InvalidDataException($"Nie znlaziono projektu o identyfikatorze {projectId}.");
+        throw new MissingDataException($"Nie znlaziono projektu o identyfikatorze {projectId}.");
       }
 
       if (project.Status == ProjectStatus.Ended)
       {
-        throw new InvalidDataException("Nie można dodać zadania do zakończonego projektu.");
+        throw new IncorrectDataException("Nie można dodać zadania do zakończonego projektu.");
       }
     }
 
@@ -334,7 +345,7 @@ namespace Domain.Services
       {
         if (task.Data.Deadline < DateTime.Now)
         {
-          throw new InvalidDataException("Termin wykonania projektu już minął.");
+          throw new IncorrectDataException("Termin wykonania projektu już minął.");
         }
       }
 
@@ -345,7 +356,7 @@ namespace Domain.Services
 
         if (allTasks.Items.Any(s => s.Title == task.Data.Title))
         {
-          throw new InvalidDataException($"Istnieje już zadanie o nazwie {task.Data.Title}.");
+          throw new IncorrectDataException($"Istnieje już zadanie o nazwie {task.Data.Title}.");
         }
       }
     }

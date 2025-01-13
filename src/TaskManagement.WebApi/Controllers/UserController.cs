@@ -135,9 +135,7 @@ namespace WebApi.Controllers
 
       var result = await userService.PatchAsync(context, id.TextToGuid(), changeUser.ToModel());
 
-      return result == null
-        ? NotFound()
-        : Ok(dtoBuilder.ConvertToUserDto(result));
+      return Ok(dtoBuilder.ConvertToUserDto(result));
     }
   }
 }

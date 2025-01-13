@@ -54,9 +54,7 @@ namespace WebApi.Controllers
     {
       var result = await teamService.GetByIdAsync(id.TextToGuid());
 
-      return result == null
-        ? NotFound()
-        : Ok(dtoBuilder.ConvertToTeamDto(result));
+      return Ok(dtoBuilder.ConvertToTeamDto(result));
     }
 
     /// <summary>
@@ -138,9 +136,7 @@ namespace WebApi.Controllers
 
       var result = await teamService.AddTeamLeader(context, teamId.TextToGuid(), userId.TextToGuid());
 
-      return result == null
-        ? NotFound()
-        : Ok(dtoBuilder.ConvertToTeamDto(result));
+      return Ok(dtoBuilder.ConvertToTeamDto(result));
     }
 
     /// <summary>
@@ -162,9 +158,7 @@ namespace WebApi.Controllers
 
       var result = await teamService.AddUserToTeam(context, teamId.TextToGuid(), userId.TextToGuid());
 
-      return result == null
-        ? NotFound()
-        : Ok(dtoBuilder.ConvertToTeamDto(result));
+      return Ok(dtoBuilder.ConvertToTeamDto(result));
     }
 
     /// <summary>
@@ -184,9 +178,7 @@ namespace WebApi.Controllers
 
       var result = await teamService.DeleteUserFromTeam(context, teamId.TextToGuid(), userId.TextToGuid());
 
-      return result == null
-        ? NotFound()
-        : Ok(dtoBuilder.ConvertToTeamDto(result));
+      return Ok(dtoBuilder.ConvertToTeamDto(result));
     }
 
     /// <summary>
@@ -207,9 +199,7 @@ namespace WebApi.Controllers
 
       var result = await teamService.PatchAsync(context, id.TextToGuid(), changeTeam.ToModel());
 
-      return result == null
-        ? NotFound()
-        : Ok(dtoBuilder.ConvertToTeamDto(result));
+      return Ok(dtoBuilder.ConvertToTeamDto(result));
     }
   }
 }

@@ -1,5 +1,6 @@
 ﻿using DataLayer;
 using Models;
+using TaskManagement.Models.Exceptions;
 using Task = System.Threading.Tasks.Task;
 
 namespace Domain.Services
@@ -16,7 +17,16 @@ namespace Domain.Services
     }
 
     public async Task<Team> GetByIdAsync(Guid id)
-      => await repository.GetByIdAsync(id);
+    {
+      var team = await repository.GetByIdAsync(id);
+
+      if (team == null)
+      {
+        throw new MissingDataException($"Nie znaleziono zespołu o id: {id}.");
+      }
+
+      return team;
+    }
 
     public async Task<PageableResult<Team>> GetAllAsync(PageableInput input)
       => await repository.GetAllAsync(input);
@@ -46,7 +56,7 @@ namespace Domain.Services
 
       if (team == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono zespołu o id: {teamId}.");
       }
 
       var originalTeam = new Team
@@ -82,7 +92,7 @@ namespace Domain.Services
 
       if (team == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono zespołu o id: {teamId}.");
       }
 
       var originalTeam = new Team
@@ -121,7 +131,7 @@ namespace Domain.Services
 
       if (team == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono zespołu o id: {teamId}.");
       }
 
       var originalTeam = new Team
@@ -157,7 +167,7 @@ namespace Domain.Services
 
       if (existingTeam == null)
       {
-        return null;
+        throw new MissingDataException($"Nie znaleziono zespołu o id: {id}.");
       }
 
       var result = await Patch(id, team);
@@ -183,7 +193,7 @@ namespace Domain.Services
 
       if (exisitng == null)
       {
-        throw new InvalidDataException($"Nie znaleziono użytkownika o Id: {userId}.");
+        throw new MissingDataException($"Nie znaleziono użytkownika o Id: {userId}.");
       }
 
       var input = new PageableInput { PageNumber = 0, PageSize = int.MaxValue };
@@ -192,7 +202,7 @@ namespace Domain.Services
 
       if (filteredTeams.Any(s => s.UserIds?.Contains(userId) == true) || filteredTeams.Any(s => s.TeamLeaderId == userId))
       {
-        throw new InvalidDataException("Użytkownik jest już przypisany do innego zespołu.");
+        throw new IncorrectDataException("Użytkownik jest już przypisany do innego zespołu.");
       }
     }
 
@@ -200,7 +210,7 @@ namespace Domain.Services
     {
       if (string.IsNullOrWhiteSpace(name))
       {
-        throw new InvalidDataException("Nie podano nazwy zespołu.");
+        throw new IncorrectDataException("Nie podano nazwy zespołu.");
       }
 
       var input = new PageableInput() { PageNumber = 0, PageSize = int.MaxValue };
@@ -208,7 +218,7 @@ namespace Domain.Services
 
       if (allTeams.Items.Any(s => s.Name == name))
       {
-        throw new InvalidDataException($"Istnieje już zespół o nazwie {name}.");
+        throw new IncorrectDataException($"Istnieje już zespół o nazwie {name}.");
       }
     }
   }

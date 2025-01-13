@@ -9,13 +9,15 @@ using WebApi.Converts;
 
 namespace WebApi
 {
-  public class Startup
+  public sealed class Startup
   {
     private readonly IWebHostEnvironment env;
+    public IConfiguration Configuration { get; }
 
-    public Startup(IWebHostEnvironment env)
+    public Startup(IWebHostEnvironment env, IConfiguration configuration)
     {
       this.env = env;
+      Configuration = configuration;
     }
 
     public void ConfigureServices(IServiceCollection services)
@@ -69,12 +71,19 @@ namespace WebApi
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
+      bool isDevelopment = env.IsDevelopment() || Debugger.IsAttached;
+
+      app.UseExceptionHandler(isDevelopment ? "/error-development" : "/error");
       app.UseCors("CustomPolicy");
       app.UseRouting();
 
-      if (env.IsDevelopment() || Debugger.IsAttached)
+      app.UseEndpoints(endpoints =>
       {
-        app.UseDeveloperExceptionPage();
+        endpoints.MapControllers();
+      });
+
+      if (isDevelopment)
+      {
         app.UseSwagger();
         app.UseSwaggerUI(options =>
         {
@@ -84,15 +93,6 @@ namespace WebApi
           options.DisplayOperationId();
         });
       }
-      else
-      {
-        app.UseExceptionHandler("/error");
-      }
-
-      app.UseEndpoints(endpoints =>
-      {
-        endpoints.MapControllers();
-      });
     }
   }
 }

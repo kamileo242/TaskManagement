@@ -1,4 +1,5 @@
 ﻿using Models;
+using TaskManagement.Models.Exceptions;
 
 namespace WebApi.Extensions
 {
@@ -22,7 +23,7 @@ namespace WebApi.Extensions
 
           if (sortedProperties.ContainsKey(name))
           {
-            throw new InvalidDataException($"Nie można sortować właściwości '{name}' w wielu kierunkach jednocześnie.");
+            throw new IncorrectDataException($"Nie można sortować właściwości '{name}' w wielu kierunkach jednocześnie.");
           }
 
           sortedProperties[name] = direction;
@@ -32,11 +33,11 @@ namespace WebApi.Extensions
           else if (direction == "desc")
             sorting.Add(SortPart.Desc(name));
           else
-            throw new InvalidDataException("Nieprawidłowy kierunek sortowania.");
+            throw new IncorrectDataException("Nieprawidłowy kierunek sortowania.");
         }
         else
         {
-          throw new InvalidDataException("Nieprawidłowy format kryteriów sortowania.");
+          throw new IncorrectDataException("Nieprawidłowy format kryteriów sortowania.");
         }
       }
 

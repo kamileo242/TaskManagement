@@ -4,6 +4,7 @@ using Domain.Services;
 using FluentAssertions;
 using Models;
 using Moq;
+using TaskManagement.Models.Exceptions;
 using Task = System.Threading.Tasks.Task;
 
 namespace ServiceTests
@@ -131,7 +132,7 @@ namespace ServiceTests
 
       var action = async () => await userService.AddAsync(mockUpdater.Object, invalidUser);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Pozycja 'Imię' jest wymagana.");
     }
 
@@ -148,7 +149,7 @@ namespace ServiceTests
 
       var action = async () => await userService.AddAsync(mockUpdater.Object, invalidUser);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Pozycja 'Nazwisko' jest wymagana.");
     }
 
@@ -165,7 +166,7 @@ namespace ServiceTests
 
       var action = async () => await userService.AddAsync(mockUpdater.Object, invalidUser);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Pozycja 'Stanowisko' jest wymagana.");
     }
 
@@ -183,7 +184,7 @@ namespace ServiceTests
 
       var action = async () => await userService.AddAsync(mockUpdater.Object, invalidUser);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową.");
     }
 
@@ -201,7 +202,7 @@ namespace ServiceTests
 
       var action = async () => await userService.AddAsync(mockUpdater.Object, invalidUser);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry.");
     }
 
@@ -234,7 +235,7 @@ namespace ServiceTests
 
       var action = async () => await userService.PatchAsync(mockUpdater.Object, userId, changes);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Pozycja 'Email' musi zawierać znak '@' oraz domenę końcową.");
     }
 
@@ -246,7 +247,7 @@ namespace ServiceTests
 
       var action = async () => await userService.PatchAsync(mockUpdater.Object, userId, changes);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Pozycja 'Numer telefonu' musi mieć dokładnie 9 znaków i zawierać tylko cyfry.");
     }
 

@@ -4,6 +4,7 @@ using Domain.Services;
 using FluentAssertions;
 using Models;
 using Moq;
+using TaskManagement.Models.Exceptions;
 using Task = System.Threading.Tasks.Task;
 
 namespace ServiceTests
@@ -139,7 +140,7 @@ namespace ServiceTests
 
       var action = async () => await teamService.AddAsync(mockUpdater.Object, teamToAdd);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Istnieje już zespół o nazwie {teamToAdd.Name}.");
     }
 
@@ -148,7 +149,7 @@ namespace ServiceTests
     {
       var action = async () => await teamService.AddAsync(mockUpdater.Object, new Team());
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Nie podano nazwy zespołu.");
     }
 
@@ -230,7 +231,7 @@ namespace ServiceTests
 
       var action = async () => await teamService.AddTeamLeader(mockUpdater.Object, teamId, userId);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Nie znaleziono użytkownika o Id: {userId}.");
     }
 
@@ -271,7 +272,7 @@ namespace ServiceTests
 
       var action = async () => await teamService.AddTeamLeader(mockUpdater.Object, teamId1, userId);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Użytkownik jest już przypisany do innego zespołu.");
     }
 
@@ -385,7 +386,7 @@ namespace ServiceTests
 
       var action = async () => await teamService.AddUserToTeam(mockUpdater.Object, teamId, userId);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Nie znaleziono użytkownika o Id: {userId}.");
     }
 
@@ -426,7 +427,7 @@ namespace ServiceTests
 
       var action = async () => await teamService.AddUserToTeam(mockUpdater.Object, teamId1, userId);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage("Użytkownik jest już przypisany do innego zespołu.");
     }
 
@@ -554,7 +555,7 @@ namespace ServiceTests
 
       var action = async () => await teamService.PatchAsync(mockUpdater.Object, teamId1, changes);
 
-      var exception = await action.Should().ThrowAsync<InvalidDataException>();
+      var exception = await action.Should().ThrowAsync<IncorrectDataException>();
       exception.WithMessage($"Istnieje już zespół o nazwie {team2.Name}.");
     }
 

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Text.Json;
+using TaskManagement.Models.Exceptions;
 
 namespace WebApi.Controllers
 {
@@ -26,14 +27,15 @@ namespace WebApi.Controllers
     public IActionResult ErrorInDevelopmentEnvironment()
       => GetResponse(isDevelopment: true);
 
-    private ObjectResult GetResponse(bool isDevelopment)
+    private IActionResult GetResponse(bool isDevelopment)
     {
       var context = HttpContext.Features.Get<IExceptionHandlerFeature>();
       var exception = context.Error;
 
       var result = exception switch
       {
-        InvalidDataException => new Result(HttpStatusCode.BadRequest, "Nieprawidłowe dane", exception.Message),
+        IncorrectDataException => new Result(HttpStatusCode.BadRequest, "Nieprawidłowe dane", exception.Message),
+        MissingDataException => new Result(HttpStatusCode.NotFound, "Brak danych", exception.Message),
         JsonException => new Result(HttpStatusCode.BadRequest, "Błąd podczas deserializacji danych JSON", exception.Message),
         _ when isDevelopment => new Result(HttpStatusCode.InternalServerError, exception.Message, exception.StackTrace, true),
         _ => new Result(HttpStatusCode.InternalServerError, "Wewnętrzny błąd usługi", exception.Message, true),
